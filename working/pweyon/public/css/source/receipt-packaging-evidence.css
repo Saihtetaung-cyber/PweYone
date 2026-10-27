@@ -1,0 +1,37 @@
+
+/* Scoped to packaging evidence panels in the purchase and receiving detail. */
+#main .ppl2-panel{min-width:0;margin:16px 0 22px;padding:18px;border:1px solid #d5e2f1;border-radius:10px;background:#f8fbff;color:var(--ink);line-height:1.9}
+#main .ppl2-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#main .ppl2-heading h3{font-size:16px;line-height:1.9;margin:0}
+#main .ppl2-badge{flex-shrink:0;padding:3px 10px;border-radius:6px;background:#eaf2fc;color:#2b63a1;font-size:12px}
+#main .ppl2-source{font-size:12px;color:#60758e;margin:5px 0 14px;overflow-wrap:anywhere}
+#main .ppl2-original,#main .ppl2-current{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#main .ppl2-original{padding:12px 14px;background:#fff;border:1px solid #e0e8f2;border-radius:8px;margin-bottom:14px}
+#main .ppl2-original>div,#main .ppl2-current>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+#main .ppl2-original span,#main .ppl2-current span{font-size:12px;color:#60758e}
+#main .ppl2-original strong{font-size:14px;overflow-wrap:anywhere}
+#main .ppl2-current{padding:0 0 13px}
+#main .ppl2-current strong{font-size:21px;line-height:1.8;color:#245f9f;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#main .ppl2-current small{font-size:13px;color:#46678e}
+#main .ppl2-current-groups{border-top:1px solid #dde7f2;padding-top:10px}
+#main .ppl2-current-line{display:flex;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;font-size:12px;line-height:1.9;margin:3px 0}
+#main .ppl2-current-line span{color:#60758e}
+#main .ppl2-help{font-size:12px;color:#60758e;line-height:1.9;margin:10px 0 0;overflow-wrap:anywhere}
+#main .ppl2-records{margin-top:14px;border-top:1px solid #d9e4f1;padding-top:12px}
+#main .ppl2-records>summary{color:#245f9f;font-size:14px;font-weight:600;cursor:pointer;line-height:1.9;padding:5px 0}
+#main .ppl2-records>summary:focus-visible{outline:3px solid #8bb7e9;outline-offset:3px;border-radius:4px}
+#main .ppl2-records>summary span{font-size:12px;font-weight:400}
+#main .ppl2-history-total{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;font-size:12px;color:#526b87}
+#main .ppl2-history-total strong{color:#245f9f;font-size:13px}
+#main .ppl2-history-list{background:#fff;border:1px solid #e0e8f2;border-radius:8px;overflow:hidden}
+#main .ppl2-history-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1.15fr);gap:16px;padding:14px}
+#main .ppl2-history-row+.ppl2-history-row{border-top:1px solid #e0e8f2}
+#main .ppl2-history-row>div{min-width:0;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+#main .ppl2-history-row strong{font-size:13px;line-height:1.9}
+#main .ppl2-history-row span{font-size:12px;color:#60758e;line-height:1.9}
+#main .ppl2-history-amount{text-align:right}
+#main .ppl2-history-amount strong{color:#245f9f}
+#main .ppl2-detail-panels{margin-top:18px;min-width:0}
+@media(max-width:620px){#main .ppl2-panel{padding:14px;margin-bottom:18px}#main .ppl2-heading{align-items:flex-start}#main .ppl2-heading h3{font-size:15px}#main .ppl2-original,#main .ppl2-current{gap:12px}#main .ppl2-original{padding:10px}#main .ppl2-current strong{font-size:18px}#main .ppl2-history-row{grid-template-columns:minmax(0,1fr);gap:10px;padding:12px}#main .ppl2-history-row>div+div{padding-top:9px;border-top:1px dashed #e0e8f2}#main .ppl2-history-amount{text-align:left}#main .ppl2-current-line{flex-direction:column;gap:1px}#main .ppl2-source{margin-bottom:12px}}
+@media(max-width:480px){#main .ppl2-original,#main .ppl2-current{grid-template-columns:minmax(0,1fr)}#main .ppl2-current>div+div{border-top:1px solid #e0e8f2;padding-top:12px}}
+

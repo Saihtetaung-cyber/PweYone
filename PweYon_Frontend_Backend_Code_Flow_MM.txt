@@ -1,0 +1,564 @@
+PweYon — Frontend / Backend ချိတ်ဆက်ပုံနှင့် Code Flow
+====================================================
+ရေးသားသည့်နေ့: ၂၀၂၆ အောက်တိုဘာ ၂၆
+Project folder: D:\Pwal Yone
+လက်ရှိ Application folder: D:\Pwal Yone\working\pweyon
+
+ဤဖိုင်သည် လက်ရှိ source code ကိုဖတ်ပြီး ရှင်းပြထားခြင်းဖြစ်သည်။
+အောက်ပါ relative path များသည် working/pweyon/ အောက်မှ စတွက်ထားသည်။
+တကယ့် email၊ password၊ database user password တို့ကို ဤဖိုင်တွင် မထည့်ထားပါ။
+
+၁။ စနစ်တစ်ခုလုံး၏ အဓိကဖွဲ့စည်းပုံ
+----------------------------------
+Frontend: HTML + CSS + JavaScript၊ Laravel Blade view ဖြင့် စာမျက်နှာထုတ်ပေးထားသည်။
+Backend: PHP + Laravel ဖြစ်သည်။
+Database: MySQL နှင့်ကိုက်ညီသည့် XAMPP MariaDB၊ port 3306 ကို သုံးထားသည်။
+လက်ရှိ application database အမည်မှာ pweyon ဖြစ်သည်။
+
+Browser နှင့် Laravel သည် application တစ်ခုတည်း၏ လိပ်စာကို သုံးထားသည်။
+React/Vue သီးခြား frontend server တစ်ခု၊ JWT login API တစ်ခုဖြင့် ခွဲထားခြင်းမဟုတ်ပါ။
+Browser မှ JavaScript fetch() ဖြင့် Laravel route များကို ခေါ်ပြီး JSON ဖြင့် ဆက်သွယ်သည်။
+Login ဝင်ထားမှုကို Laravel session နှင့် browser cookie ဖြင့် မှတ်ထားသည်။
+
+အကြမ်းဖျဉ်း flow:
+
+  အသုံးပြုသူက Form ဖြည့် / Button နှိပ်
+      |
+      v
+  HTML / JavaScript handler
+      |
+      v
+  public/js/server-bridge.js → fetch() HTTP request
+      |
+      v
+  routes/web.php → Middleware → Controller
+      |
+      v
+  WorkspaceAccess → BusinessService / Projection / Reports
+      |
+      v
+  Laravel DB Query Builder / User model
+      |
+      v
+  MariaDB pweyon :3306
+      |
+      v
+  JSON response → pweHydrate() → state အသစ် → render() → မျက်နှာပြင်
+
+Database ကို browser က တိုက်ရိုက်မချိတ်ပါ။ Database connection ကို PHP/Laravel ကသာ သုံးသည်။
+
+၂။ အဓိက file များနှင့် တာဝန်များ
+--------------------------------
+public/index.php
+  Browser HTTP request များ Laravel ထဲဝင်သည့် အဓိက entry point ဖြစ်သည်။
+
+bootstrap/app.php
+  Laravel application၊ web routes၊ middleware နှင့် exception response စီစဉ်ထားသည်။
+  api/* error များကို JSON ပြန်စေရန်လည်း သတ်မှတ်ထားသည်။
+
+routes/web.php
+  URL တစ်ခုစီကို မည်သည့် Controller/function ဆီပို့မည်ကို သတ်မှတ်သည်။
+  /api/ ဟူသော URL ရှိသော်လည်း ဤ project ၏ routes များသည် web.php ထဲတွင် ရှိသည်။
+  ထို့ကြောင့် session နှင့် CSRF ကာကွယ်မှုကို သုံးနိုင်သည်။
+
+resources/views/auth/login.blade.php
+  Login form ဖြစ်သည်။ Email/password ကို POST /login သို့ ပို့သည်။
+
+resources/views/workspace.blade.php
+  Main application HTML layout၊ navigation နေရာ၊ main content နေရာနှင့် modal နေရာများ။
+  Backend မှလာသော bootstrap data ကို JavaScript ထဲထည့်ပြီး CSS/JS များကို load လုပ်သည်။
+
+public/css/source/
+  မူလ interface ၏ CSS ဖိုင်များဖြစ်ပြီး လက်ရှိ view တွင် တကယ်အသုံးပြုထားသည်။
+
+public/js/source/
+  မူလ UI ၏ render၊ form၊ navigation၊ print နှင့် interaction function များ ရှိသည်။
+  source ဟုနာမည်ပေးထားသော်လည်း မသုံးသော backup folder မဟုတ်ပါ။
+
+public/js/server-bootstrap.js
+  pweHydrate() ဖြင့် server data ကို မူလ UI က သုံးနိုင်သည့် numeric format သို့ ပြောင်းသည်။
+
+public/js/server-bridge.js
+  UI save handler များကို Laravel command API နှင့် ချိတ်ပေးသည့် အဓိက file ဖြစ်သည်။
+  Workspace ပြောင်းခြင်း၊ account settings နှင့် logout navigation လည်း ဤနေရာတွင် ရှိသည်။
+
+public/js/server-reports.js
+  Report endpoint များကို ခေါ်ပြီး သက်ဆိုင်ရာ UI တန်ဖိုးများကို ဖြည့်ပေးသည်။
+
+public/js/loan-interest-policies.js
+  သတ်မှတ်ချက်ရှိ ကြိုထုတ်ငွေ အတိုးမူဝါဒ CRUD ကို ချိတ်ဆက်သည်။
+  loan_interest_policies table တွင် အမည်၊ လစဉ်နှုန်းနှင့် active အခြေအနေ သိမ်းသည်။
+  ပိုင်ရှင်သာ ပြင်ဆင်နိုင်ပြီး ထုတ်ပေးသော loan document တွင် မူဝါဒ ID၊ အမည်နှင့် နှုန်းကို
+  snapshot သိမ်းသည်။ နောက်မှ မူဝါဒပြင်/ပိတ်လည်း ယခင် loan ၏ အတိုးနှုန်း မပြောင်းပါ။
+
+public/js/service-rate-settings.js
+  သတ်မှတ်ချက်ရှိ ဝန်ဆောင်ခ CRUD နှင့် ပေါင်းနှုတ်ငွေစာရင်းကို ခွဲပြသည်။
+  ဝန်ဆောင်ခကို master.save / master.inactivate ၏ kind=service_rate ဖြင့် စီမံသည်။
+  Database ထဲတွင် ယခင် adjustment_rates ၏ service_percent records ကိုပင် ဆက်သုံးသဖြင့်
+  ယခင်ဘောက်ချာ references နှင့် တွက်ပြီးသား ငွေစာရင်းများ မပြောင်းပါ။
+  အဝယ်/အရောင်းဖောင်များတွင် active ဖြစ်ပြီး သက်ဆိုင်ရာလုပ်ငန်းအတွက် သတ်မှတ်ထားသည့်
+  ဝန်ဆောင်ခရာခိုင်နှုန်းကိုသာ ရွေးနိုင်သည်။ ပိတ်ထားသောနှုန်းကို အသစ်မရွေးနိုင်ပါ။
+
+app/Http/Controllers/WorkspaceController.php
+  Main page၊ state data နှင့် business command request များကို လက်ခံသည်။
+
+app/Http/Controllers/AuthController.php
+  Login/logout၊ owner/staff view ပြောင်းခြင်းနှင့် password/email settings ကို ကိုင်တွယ်သည်။
+
+app/Http/Controllers/ReportController.php
+  Report date/filter စစ်ပြီး Reports service ကို ခေါ်သည်။
+
+app/Http/WorkspaceAccess.php
+  လက်ရှိ session အတွက် effective owner/clerk လုပ်ပိုင်ခွင့်ကို ဆုံးဖြတ်သည်။
+
+app/Domain/BusinessService.php
+  ကုန်ဝင်၊ အဝယ်၊ အရောင်း၊ ငွေသွင်း/ထုတ်၊ stock ပြောင်းခြင်း စသည့် business write logic များ။
+
+app/Domain/Projection.php
+  Database table များမှဖတ်ပြီး မူလ frontend က နားလည်သည့် state structure ပြန်တည်ဆောက်သည်။
+
+app/Domain/Reports.php
+  Owner overview၊ အမြတ်အရှုံး၊ stock ledger နှင့် party statement တွက်ချက်သည်။
+
+app/Domain/Records.php
+  DB insert/update/get နှင့် validation helper များဖြစ်သည်။
+
+app/Domain/Decimal.php
+  ငွေကြေးနှင့် အလေးချိန်ကို decimal string / BCMath ဖြင့် တွက်ချက်သည်။
+
+app/Domain/ClosingSnapshot.php
+  နေ့ပိတ်ချိန်အတွက် ငွေစာရင်း၊ ကုန်စာရင်း စသည့် snapshot ကို စုစည်းပေးသည်။
+
+app/Models/User.php
+  Login account အတွက် Eloquent model ဖြစ်သည်။ Password hash နှစ်မျိုးကို JSON မှ ဖုံးထားသည်။
+
+config/database.php + .env
+  Database connection အမျိုးအစားနှင့် private connection setting များဖြစ်သည်။
+  config/database.php က DB_CONNECTION၊ DB_HOST၊ DB_PORT စသည်ကို .env မှ ဖတ်သည်။
+
+database/migrations/
+  Table/column/index/constraint တည်ဆောက်ပြောင်းလဲသည့် migration များဖြစ်သည်။
+  လက်ရှိ migration ၃၂ ခုရှိပြီး owner_view_password နှင့် loan_interest_policies ပါဝင်သည်။
+
+၃။ Login ဝင်သည့် flow
+----------------------
+  GET /login
+    → routes/web.php ၏ guest group
+    → AuthController::form()
+    → auth/login.blade.php
+
+  Email/password ဖြည့်ပြီး ဝင်မယ်နှိပ်
+    → POST /login၊ form ထဲတွင် @csrf token ပါသည်
+    → AuthController::login()
+    → email/password validation
+    → Auth::attempt(... active=true)
+    → users table မှ account နှင့် stored password hash စစ်ခြင်း
+    → အောင်မြင်လျှင် session ID regenerate
+    → account role မည်သို့ရှိသည်ဖြစ်စေ pweyon.workspace_view ကို staff အဖြစ် session ထဲသိမ်း
+    → ယခင် intended URL ကိုရှင်းပြီး / သို့ redirect
+    → စာရေးမ home page ကို အရင်ပြ
+
+ပိုင်ရှင် account ဖြင့် login ဝင်လျှင်လည်း စာရေးမဘက်ကို အရင်ရောက်သည်။
+ပိုင်ရှင်ဘက်သွားလိုလျှင် role selector မှ ပိုင်ရှင်ကိုရွေးပြီး သီးခြားပိုင်ရှင် password ထည့်ရမည်။
+Logout လုပ်ပြီး နောက်တစ်ကြိမ် login ဝင်လျှင်လည်း staff view မှ ပြန်စသည်။
+
+မမှန်လျှင် login form သို့ error ဖြင့် ပြန်သွားသည်။
+POST /login တွင် တစ်မိနစ် ၆ ကြိမ် throttle ရှိသည်။
+
+၄။ Main page ဖွင့်ချိန် data ရယူသည့် flow
+--------------------------------------
+  GET /
+    → auth middleware က login ရှိ/မရှိ စစ်
+    → WorkspaceController::index()
+    → active account ဖြစ်/မဖြစ် စစ်
+    → WorkspaceAccess::state(request, projection)
+    → WorkspaceAccess::actor() က လက်ရှိ view ၏ လုပ်ပိုင်ခွင့်ဆုံးဖြတ်
+    → Projection::forUser() က database မှ state တည်ဆောက်
+    → workspace.blade.php သို့ bootstrap ဟူသော variable ဖြင့်ပို့
+
+Blade ထဲရှိ အဓိကချိတ်ဆက် code:
+
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script>
+    window.__PWE_BOOT__ = {{ Illuminate\Support\Js::from($bootstrap) }};
+  </script>
+
+Js::from() သည် server data ကို JavaScript ထဲသို့ သင့်လျော်စွာ encode လုပ်ပေးသည်။
+
+Script load အစီအစဉ်:
+  ၁) server-bootstrap.js → pweHydrate() အသင့်ဖြစ်
+  ၂) source/receipt-quantity-helpers.js မှ source/stock-ledger-details.js အပါအဝင် မူလ UI scripts များ
+  ၃) server-bridge.js → save/role/settings handler များကို server နှင့် ချိတ်
+  ၄) server-reports.js → report UI အတွက် fetch ချိတ်
+
+source/workspace-core.js နှင့် server-bridge.js တွင် bootstrap data မှ state စတင်ထားသည်။
+စာမျက်နှာအတွင်း navigate လုပ်လျှင် render() ဖြင့် UI ပြန်ဆွဲသည်။
+Page တစ်ခုစီအတွက် Laravel route အသစ်တစ်ခုစီ မလိုပါ။
+Browser refresh လုပ်လျှင် GET / မှတစ်ဆင့် database data ပြန်ယူသည်။
+GET /api/state ကိုခေါ်လျှင်လည်း permission စစ်ထားသော state JSON ရနိုင်သည်။
+
+၅။ Frontend save → Backend save အဓိက flow
+-----------------------------------------
+ဥပမာ: ကုန်အဝင်သိမ်းမည့် saveReceive4()
+
+  Form input များ
+    → server-bridge.js ထဲရှိ saveReceive4 handler
+    → bind() helper က action နှင့် input တည်ဆောက်
+    → command('receipt.create', input, options)
+    → fetch('/api/commands', ...)
+
+HTTP request တွင် ပါဝင်သောအချက်များ:
+  Method: POST
+  Content-Type: application/json
+  Accept: application/json
+  credentials: same-origin  [session cookie ပါသွားစေရန်]
+  X-CSRF-TOKEN: Blade meta မှ token
+  Idempotency-Key: crypto.randomUUID() ဖြင့်ရသော key
+
+Request body ဥပမာ (ID များသည် ဥပမာသာဖြစ်သည်):
+  {
+    "action": "receipt.create",
+    "input": {
+      "party_id": "1",
+      "warehouse_id": "1",
+      "vehicle": "MDY-123",
+      "lines": [
+        {
+          "product_id": "1",
+          "grade": "A",
+          "bag_type": "weight",
+          "quantity": "1500"
+        }
+      ]
+    }
+  }
+
+Browser က state တစ်ခုလုံး၊ ကိုယ်တိုင်တွက်ထားသော နောက်ဆုံး stock/cash balance ကို မပို့ပါ။
+မည်သည့်လုပ်ဆောင်မှုလုပ်မည်နှင့် ထိုလုပ်ဆောင်မှုအတွက် input ကိုသာ ပို့သည်။
+Backend က permission၊ stock၊ ငွေပမာဏနှင့် စည်းမျဉ်းများကို ထပ်စစ်ပြီး တွက်ချက်သည်။
+
+၆။ /api/commands မှ database အထိ
+--------------------------------
+  routes/web.php
+    → WorkspaceController::command()
+    → action သည် string ဖြစ်ရမည်၊ input သည် array ဖြစ်ရမည်ဟု စစ်
+    → WorkspaceAccess::actor(request)
+    → BusinessService::execute(actor, action, input, request key)
+
+BusinessService::execute() ထဲတွင် အဆင့်လိုက်:
+  ၁) Active account ဟုတ်/မဟုတ် စစ်သည်။
+  ၂) Idempotency-Key သည် UUID ဟုတ်/မဟုတ် စစ်သည်။
+  ၃) Owner-only operation များအတွက် owner permission စစ်သည်။
+  ၄) Action/input မှ intent hash တွက်သည်။
+  ၅) DB::transaction() စတင်သည်။
+  ၆) operation_locks table ၏ workspace row ကို lockForUpdate() ဖြင့် lock လုပ်သည်။
+  ၇) command_receipts တွင် actor + request key အတူတူ ရှိ/မရှိ စစ်သည်။
+     ရှိပြီး input တူလျှင် ယခင် result ပြန်ပေးပြီး ထပ်မသိမ်းပါ။
+     Key တူပြီး input မတူလျှင် HTTP 409 ပြန်သည်။
+  ၈) Business day နှင့် လိုအပ်သည့် opening/day status စစ်သည်။
+  ၉) Payment split ပါလျှင် ထည့်သောစုစုပေါင်းနှင့် ကိုက်/မကိုက် စစ်သည်။
+  ၁၀) match(action) ဖြင့် သက်ဆိုင်ရာ method ကို ခေါ်သည်။
+  ၁၁) Business rows၊ audit_logs နှင့် command_receipts ကို transaction တစ်ခုတည်းတွင် သိမ်းသည်။
+  ၁၂) အောင်မြင်လျှင် commit၊ error ဖြစ်လျှင် rollback လုပ်သည်။
+
+DB transaction တွင် deadlock retry အတွက် attempts=5 သတ်မှတ်ထားသည်။
+Workspace lock ကြောင့် တစ်ချိန်တည်းဝင်သော business write များကို အစဉ်လိုက် ကိုင်တွယ်သည်။
+ဤ project ၏ stock/cash write များအတွက် ဗဟိုထိန်းချုပ်မှုဖြစ်သည်။
+
+၇။ ကုန်အဝင် receipt.create ကို အသေးစိတ်ကြည့်ခြင်း
+-------------------------------------------------
+BusinessService::receive(input)
+  → partners မှ supplier active ဟုတ်/မဟုတ် စစ်
+  → warehouses မှ warehouse active ဟုတ်/မဟုတ် စစ်
+  → product line ၁ မှ ၅၀ အတွင်းနှင့် duplicate product ရှိ/မရှိ စစ်
+  → document('receipt', ...) ဖြင့် documents တွင် receipt header သိမ်း
+  → product၊ grade၊ bag type၊ bags/weight/size များကို စစ်
+  → line() ဖြင့် document_lines တွင် တစ်ကြောင်းစီ သိမ်း
+  → stock_lots တွင် supplier ပိုင် ကုန် lot စတင်ဖန်တီး
+  → event('receive', ...) ဖြင့် stock_events တွင် လှုပ်ရှားမှုမှတ်တမ်း သိမ်း
+  → ကြိုပေးငွေ/ကားခ ပါလျှင် သက်ဆိုင်ရာ advance/expense logic ခေါ်
+  → {document_id, line_ids} ပြန်ပေး
+
+ကုန်ရောက်လာခြင်းနှင့် ပွဲရုံက ဝယ်ယူပြီးပိုင်ဆိုင်ခြင်းကို သီးခြားမှတ်ထားသည်။
+Weight မသိရသေးသော raw receiving အချို့တွင် quantity ကို NULL အဖြစ် ထားနိုင်သည်။
+မသိသောအလေးချိန်ကို အမှန်တကယ် သုညရှိသကဲ့သို့ မသိမ်းပါ။
+
+၈။ Backend response မှ မျက်နှာပြင်ပြန်ပြောင်းသည့် flow
+----------------------------------------------------
+BusinessService execute ပြီးနောက် WorkspaceController က:
+  result = သိမ်းထားသည့် record ID / operation result
+  state = Projection ဖြင့် database မှ အသစ်ပြန်ဖတ်ထားသည့် UI state
+တို့ကို JSON ပြန်ပေးသည်။
+
+  {
+    "result": {"document_id": 123, "line_ids": [456]},
+    "state": { ... လက်ရှိအသုံးပြုသူမြင်ခွင့်ရှိသော data ... }
+  }
+
+server-bridge.js က:
+  response.json()
+    → apply(data.state)
+    → pweHydrate() ဖြင့် numeric display data ပြောင်း
+    → committed state ကို update
+    → syncMasters()
+    → workDirty/workView/page ကို လိုသလို ပြန်သတ်မှတ်
+    → render()
+    → အောင်မြင်ကြောင်း toast ပြ
+
+pweHydrate() ၏ Number ပြောင်းခြင်းသည် UI compatibility အတွက် ဖြစ်သည်။
+Server ၏ ငွေကြေးဆုံးဖြတ်ချက်မှာ Decimal/BCMath နှင့် database decimal fields ကို သုံးသည်။
+
+၉။ အခြား business action များ မည်သို့ ချိတ်ထားသလဲ
+-------------------------------------------------
+UI handler / action / backend method အဓိက mapping များ:
+
+  saveReceive4         → receipt.create / receipt.edit → receive() / editReceipt()
+  commitVoucher4       → purchase.create / sale.create → purchase() / sell()
+  savePayment4         → payment.create                → payment()
+  saveDispatch4        → dispatch.create               → dispatch()
+  savePack4            → packaging.create              → pack()
+  saveTransfer4        → warehouse.transfer            → transfer()
+  saveAdjustment       → stock.adjust                  → adjust()
+  pweSaveGround64      → stock.check.submit            → submitCheck()
+  pweApproveGround64   → stock.check.approve           → decideCheck()
+  pweConfirmReject64   → stock.check.reject            → decideCheck()
+  saveSupplierAdvance → advance.create                → advance()
+  saveLoan38           → loan.create                   → loan()
+  saveRepay38          → loan.repay                    → repay()
+  saveExpense          → expense.create                → expense()
+  saveCashIn50         → cash.fund                     → fund()
+  Master save handlers → master.save / master.inactivate → master() / inactivate()
+  saveNotebook63       → note.save                     → note()
+
+ထပ်မံရှိသော action များ:
+  receipt.weigh၊ cash.reverse၊ request.create၊ request.receive၊ settlement.confirm
+  day.open၊ day.close၊ day.next၊ prices.save၊ note.delete
+  opening.draft၊ opening.approve၊ opening.dispatch၊ opening.credit၊ opening.reopen
+
+Action အားလုံး၏ dispatch စာရင်းကို BusinessService::execute() ၏ match block တွင် ကြည့်နိုင်သည်။
+Frontend မှ မည်သည့် field ID ကိုဖတ်ပြီး မည်သည့် input key သို့ ပြောင်းသည်ကို
+server-bridge.js ၏ bind(...) နှင့် voucher()/splits()/adjustments() helper များတွင် ကြည့်နိုင်သည်။
+
+အဝယ်/အရောင်းအတွက် price၊ gross/net၊ charge၊ payment allocation၊ stock ownership တို့ကို
+Backend က ပြန်စစ်/တွက်ချက်သည်။ ဝယ်သူပိုင်ကုန်နှင့် တကယ်ဂိုဒေါင်မှထွက်သွားသောကုန်ကို
+သီးခြားထားသောကြောင့် အရောင်းပြီး နောက်မှကုန်ထုတ်ပေးခြင်းကို မှတ်တမ်းတင်နိုင်သည်။
+
+၁၀။ Database table များ၏ အဓိကဆက်နွယ်မှု
+-----------------------------------------
+users
+  Login identity၊ role၊ active status၊ password နှင့် owner_view_password hash များ။
+
+partners / products / warehouses / package_types
+  လုပ်ဖော်ကိုင်ဖက်၊ ကုန်ပစ္စည်း၊ ဂိုဒေါင်၊ ထုပ်ပိုးပုံ master data များ။
+
+documents → document_lines
+  Transaction header တစ်ခုအောက်တွင် product/detail line များ ပါဝင်သည်။
+
+document_lines → stock_lots → stock_events
+  Source line မှ lot ဆင်းသက်လာပြီး လှုပ်ရှားမှုကို event အဖြစ် မှတ်တမ်းထားသည်။
+
+cash_accounts → cash_entries
+  Account လက်ကျန်နှင့် ငွေအဝင်/အထွက် ledger records ဖြစ်သည်။
+
+documents → payments → payment_allocations
+  Document အတွက် ပေးချေမှုနှင့် ထိုပေးချေမှုကို line များသို့ ခွဲဝေထားမှု ဖြစ်သည်။
+
+business_days
+  လုပ်ငန်းရက်၊ opening စစ်ဆေးမှု၊ နေ့ဖွင့်/ပိတ် status နှင့် closing data ရှိသည်။
+
+stock_checks / recoveries / daily_prices / business_settings
+  Stock စစ်ဆေးမှု၊ ကြိုသုံးငွေပြန်နုတ်မှု၊ နေ့စဉ်စျေးနှုန်းနှင့် ဆက်စပ် setting များ။
+
+audit_logs / command_receipts / operation_locks
+  Business လုပ်ဆောင်ချက်မှတ်တမ်း၊ retry ထပ်မသိမ်းစေရန်မှတ်တမ်းနှင့် write lock တို့။
+
+အမှန်တကယ် column/FK/index များကို database/migrations/ တွင် ကြည့်ရမည်။
+Projection.php သည် ဤ table များကို join/map လုပ်ကာ receipts၊ sales၊ lots၊ masters၊
+cash movements နှင့် အခြား UI state data များအဖြစ် ပြောင်းပေးသည်။
+resources/data/interface-defaults.json သည် UI structure အတွက် default ဖြစ်သည်။
+တကယ့်လုပ်ငန်း records ၏ အဓိကသိမ်းဆည်းရာမှာ database ဖြစ်သည်။
+
+၁၁။ Report data ရသည့် flow
+---------------------------
+  Owner overview / profit / stock ledger page render
+    → server-reports.js::refresh()
+    → report(kind, params)
+    → GET /api/reports/{kind}?from=YYYY-MM-DD&to=YYYY-MM-DD
+    → ReportController::__invoke()
+    → date range/filter validation
+    → WorkspaceAccess::actor()
+    → Reports service
+    → JSON response
+    → UI metric/table cells ဖြည့်
+
+Kind နှင့် backend method:
+  overview  → Reports::overview()
+  profit    → Reports::profit()
+  stock     → Reports::stock()
+  statement → Reports::statement()
+
+Report API ရှိခြင်းနှင့် UI အားလုံးက API ကို သုံးပြီးပြီဆိုခြင်း မတူပါ။
+server-reports.js က ချိတ်ထားသော screen/metric များကိုသာ တိုက်ရိုက်ဖြည့်သည်။
+မူလ UI အတွင်း အခြားဇယား/print အချို့သည် Projection state မှ ဆက်တွက်/ဆွဲနေဆဲ ဖြစ်သည်။
+Overview/profit သည် owner-only ဖြစ်ပြီး အခြား reports မှာလည်း သက်ဆိုင်ရာ access စစ်သည်။
+Report cache ကို browser memory ထဲသိမ်းပြီး workspace ပြောင်းသော event ရလျှင် ရှင်းသည်။
+
+၁၂။ စာရင်းမ / ပိုင်ရှင် view ပြောင်းသည့် flow
+---------------------------------------------
+Browser changeRole('staff'):
+  → POST /api/workspace/view {"view":"staff"}
+  → AuthController::workspaceView()
+  → owner account ဟုတ်/မဟုတ် စစ်
+  → session view ကို staff သို့ပြောင်း
+  → staff permission ဖြင့် state ပြန်ပေး
+  → UI ပြန်ဆွဲ
+  ဤဘက်ပြောင်းရာတွင် password မတောင်းပါ။
+
+Browser changeRole('owner'):
+  → owner password modal ဖွင့်
+  → pweConfirmOwnerView()
+  → POST /api/workspace/view {"view":"owner","password":"..."}
+  → backend က owner_view_password hash နှင့် Hash::check()
+  → မှန်လျှင် session view ကို owner သို့ပြောင်း
+  → owner state နှင့် csrfToken ပြန်ပေး
+  → frontend token၊ state၊ navigation နှင့် report cache ပြန်ပြင်
+
+Password မှားလျှင် staff အဖြစ်သာ ဆက်ရှိပြီး ၅ ကြိမ်မှားလျှင် အချိန်တို rate limit ရှိသည်။
+သီးခြား hash မသတ်မှတ်ရသေးသော account အတွက် လက်ရှိ login hash သို့ fallback ရှိသည်။
+ရှိပြီးသား owner account များအတွက် migration က ယခင် login hash ကို copy ထားပြီးဖြစ်သည်။
+
+WorkspaceAccess::actor() သည် staff view တွင် User ကို clone လုပ်ပြီး role=clerk ပေးသည်။
+Database ထဲရှိ တကယ့် users.role ကို clerk အဖြစ် ပြောင်းသိမ်းခြင်း မလုပ်ပါ။
+State၊ commands နှင့် reports အားလုံးက ဤ effective actor ကို သုံးသည်။
+ထို့ကြောင့် browser မှ state.role ပြင်ရုံဖြင့် owner လုပ်ပိုင်ခွင့် မရနိုင်ပါ။
+တကယ့် clerk account သည် owner view သို့ ဤ selector ဖြင့် မတက်နိုင်ပါ။
+
+၁၃။ Login setting နှင့် ပိုင်ရှင် Password setting သီးခြား flow
+--------------------------------------------------------------
+ပထမ menu: Login Email / Password
+  → pweOpenAccount(false)
+  → GET /api/account ဖြင့် လက်ရှိ email ယူ
+  → Email နှင့် Login Password အသစ် form ပြ
+  → pweSaveAccount()
+  → POST /api/account {"email":"...","password":"..."}
+  → AuthController::updateAccount()
+  → active owner view ဖြစ်/မဖြစ် စစ်
+  → email format/unique နှင့် password length စစ်
+  → user row lock ဖြင့် update
+  → Login password အသစ်ကို hash ဖြင့် သိမ်း
+  → owner-entry password ကို သီးခြားဆက်ထိန်းထား
+
+ဒုတိယ menu: ပိုင်ရှင် Password
+  → pweOpenAccount(true)
+  → ပိုင်ရှင် Password အသစ် input တစ်ခုသာ ပြ
+  → pweSaveAccount()
+  → POST /api/account/owner-password {"owner_view_password":"..."}
+  → AuthController::updateOwnerPassword()
+  → active owner view နှင့် new password စစ်
+  → user row lock ဖြင့် owner_view_password hash ကိုသာ ပြောင်း
+  → Login email/password မပြောင်း
+
+Menu နှစ်ခုစလုံးတွင် လက်ရှိ password ပြန်မတောင်းပါ။
+Password အသစ်ကို နှစ်ကြိမ်ထည့်ရသော confirmation မရှိပါ။
+Login password အသစ်ကို အလွတ်ထားလျှင် ယခင် login password ဆက်ရှိသည်။
+ပိုင်ရှင် password ပြောင်းသော form တွင် password အသစ် ထည့်ရမည်။
+Password အသစ်အတွက် လက်ရှိ validation သည် အနည်းဆုံး ၈ လုံး၊ အများဆုံး ၇၂ လုံး ဖြစ်သည်။
+တစ်ခု၏ endpoint သို့ တစ်ခု၏ credential fields ပါလာလျှင် validation က ငြင်းသည်။
+Password များကို plain text အဖြစ် database မသိမ်းဘဲ User model hashed cast ဖြင့် သိမ်းသည်။
+Settings သည် /api/commands ကို မသုံးသဖြင့် business command receipt ထဲ password မဝင်ပါ။
+
+၁၄။ Logout flow
+----------------
+Navigation ထဲရှိ ထွက်မယ် button
+  → CSRF token ပါသော HTML form ဖြင့် POST /logout
+  → AuthController::logout()
+  → Auth::logout()
+  → session invalidate၊ CSRF token regenerate
+  → /login သို့ redirect
+
+၁၅။ Error / retry / session လုံခြုံရေး flow
+-----------------------------------------
+HTTP 401: JSON API request တွင် login မရှိခြင်း။
+HTTP 403: လုပ်ပိုင်ခွင့်မရှိခြင်း၊ active မဖြစ်ခြင်း စသည်။
+HTTP 419: CSRF/session token ပြဿနာ။
+HTTP 422: Form/business validation မအောင်မြင်ခြင်း။
+HTTP 409: Request key တူပြီး intent မတူခြင်း။
+HTTP 429: Login/password/settings request rate limit ကျော်ခြင်း။
+HTTP 500: မမျှော်လင့်ထားသော server error ဖြစ်နိုင်ခြင်း။
+
+server-bridge.js သည် data.errors / data.message ကို modal သို့မဟုတ် toast တွင် ပြသည်။
+Business command ၏ network/server error ကြောင့် သိမ်းပြီး/မပြီး မသေချာလျှင်
+pending intent နှင့် မူလ UUID key ကို memory ထဲ ထိန်းထားပြီး ထပ်စစ်/ပြန်ပို့နိုင်သည်။
+မူလ key ဖြင့် retry လုပ်ရာတွင် command_receipts ကြောင့် ထပ်မံငွေ/stock မတိုးသင့်ပါ။
+ထို pending အချက်အလက်သည် browser memory ထဲသာရှိပြီး refresh ကျော် အမြဲမကျန်ပါ။
+Validation error ကဲ့သို့ HTTP 500 အောက် response ဖြစ်လျှင် pending ကို ရှင်းပေးသည်။
+
+Route များ၏ block(60, 10) သည် တူညီသော session request များကို အစဉ်လိုက်စေသည်။
+၎င်းသည် database business write lock နှင့် သီးခြားဖြစ်သည်။
+Session block က role/session ပြောင်းမှုအဟောင်းအသစ် ရောထွေးခြင်းကို တားပေးသည်။
+operation_locks က workspace တစ်ခု၏ business write များကို ထိန်းပေးသည်။
+
+မူလ UI ၏ generic save() ကို server-bridge.js က override လုပ်ထားသည်။
+Opening draft အတွက် server save path ရှိပြီး အခြားမချိတ်ရသေးသော generic save ကို ငြင်းသည်။
+Browser state/localStorage တစ်ခုလုံးကို တကယ့် business database အဖြစ် မသုံးပါ။
+
+၁၆။ Code ကို လက်တွေ့လိုက်ဖတ်ရန် အစီအစဉ်
+---------------------------------------
+အမြန်သဘောပေါက်လိုလျှင် အောက်ပါအစီအစဉ်အတိုင်း ဖတ်ပါ။
+
+  ၁) routes/web.php
+     URL → Controller mapping ကို ကြည့်ပါ။
+  ၂) app/Http/Controllers/WorkspaceController.php
+     index/state/command လမ်းကြောင်း ၃ ခုကို ကြည့်ပါ။
+  ၃) app/Http/WorkspaceAccess.php
+     တကယ့် account role နှင့် effective view role ကွာခြားပုံကို ကြည့်ပါ။
+  ၄) resources/views/workspace.blade.php
+     __PWE_BOOT__၊ csrf-token နှင့် script load အစီအစဉ်ကို ကြည့်ပါ။
+  ၅) public/js/server-bootstrap.js
+     Data hydration ပုံကို ကြည့်ပါ။
+  ၆) public/js/server-bridge.js
+     bind('saveReceive4', ...) နှင့် command() ကို စတင်ကြည့်ပါ။
+  ၇) app/Domain/BusinessService.php
+     execute() → receive() → document()/line()/event() ကို လိုက်ပါ။
+  ၈) app/Domain/Records.php နှင့် Decimal.php
+     DB write helper နှင့် exact decimal တွက်ချက်ပုံကို ကြည့်ပါ။
+  ၉) app/Domain/Projection.php
+     သိမ်းပြီး database မှ state ပြန်ဖွဲ့ပုံကို ကြည့်ပါ။
+  ၁၀) server-bridge.js ၏ apply() နှင့် source script များ၏ render()
+      Response ရပြီး UI ပြန်တည်ဆောက်ပုံကို ကြည့်ပါ။
+  ၁၁) server-reports.js → ReportController.php → Reports.php
+      Report အတွက် သီးခြား read flow ကို လိုက်ပါ။
+  ၁၂) AuthController.php နှင့် app/Models/User.php
+      Login၊ workspace password နှင့် သီးခြား settings flow ကို ကြည့်ပါ။
+
+Browser DevTools မှ လက်တွေ့စစ်ကြည့်နိုင်ပုံ:
+  F12 → Network → Fetch/XHR ဖွင့်ပြီး Form သိမ်းပါ။
+  /api/commands request ၏ Payload မှ action/input ကို ကြည့်ပါ။
+  Headers မှ CSRF နှင့် Idempotency-Key ပါ/မပါ ကြည့်ပါ။
+  Response မှ result/state နှင့် HTTP status ကို ကြည့်ပါ။
+  Settings အတွက် /api/account နှင့် /api/account/owner-password ကို ခွဲကြည့်ပါ။
+  Report အတွက် /api/reports/... request query နှင့် response ကို ကြည့်ပါ။
+  Network မှ password ပါသော request များကို screenshot/export ဖြင့် မျှဝေရာတွင် ဖုံးထားပါ။
+
+၁၇။ စမ်းသပ်မှုနှင့် ရှိပြီးသား ကန့်သတ်ချက်
+----------------------------------------
+Backend regression tests:
+  tests/Feature/BusinessFlowsTest.php နှင့် အခြား test files များ။
+  သီးခြား pweyon_test database ဖြင့် စမ်းသည်။ Application pweyon နှင့် ခွဲထားသည်။
+
+Browser integration test:
+  D:\Pwal Yone\development\tools\test-browser.cjs
+  ယာယီ owner/clerk account ဖြင့် login၊ write၊ reload၊ view/password ပြောင်းပုံကို စမ်းသည်။
+
+နောက်ဆုံး သီးခြား settings ပြင်ဆင်မှုအတွက်:
+  Account/workspace tests ၁၃ ခု၊ assertions ၁၀၈ ခု အောင်မြင်ထားသည်။
+  Real Edge browser ဖြင့် login၊ ကုန်ဝင်/အဝယ်/အရောင်း၊ သီးခြား setting flows စမ်းပြီးဖြစ်သည်။
+  အထောက်အထားများကို docs/evidence/separate-settings-* တွင် ကြည့်နိုင်သည်။
+
+ဤစာတမ်းတွင် flow ရှင်းထားခြင်းသည် UI လုပ်ဆောင်ချက်တိုင်း အပြည့်အဝပြီးပြီဟု မဆိုလိုပါ။
+မူလ UI/report/print နှင့် လုပ်ငန်းစည်းမျဉ်းအားလုံး တိုက်စစ်ခြင်း၊ လူကလုပ်သော UAT တို့မှာ
+ကျန်နေသေးသည့် အပိုင်းများရှိပြီး docs/KNOWN_GAPS.md တွင် မှတ်တမ်းထားသည်။
+
+လက်ရှိ flow ကို တစ်ကြောင်းဖြင့် ပြန်ကြည့်လျှင်:
+  UI input → JavaScript bridge → Laravel route/controller → permission/business logic
+  → MariaDB → Projection/JSON → JavaScript state → render() ဖြစ်သည်။

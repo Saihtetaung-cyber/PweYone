@@ -1,0 +1,11 @@
+
+/* V39: receive raw-bag count as the default editable count in purchase pricing. */
+.pricing-raw-bags39{background:#f4f8fe;border:1px solid #d5e2ef;border-radius:13px;padding:17px 19px;margin:4px 0 18px}
+.pricing-raw-bags39 .pricing-received39{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:13px;color:var(--muted);font-size:14px}
+.pricing-raw-bags39 .pricing-received39 strong{font:700 21px Arial,sans-serif;color:var(--ink)}
+.pricing-raw-bags39 .field{margin-bottom:5px}
+.pricing-raw-bags39 input{background:white;font:700 23px Arial,sans-serif;max-width:340px}
+.pricing-raw-bags39 .pricing-change39{margin:8px 0 0;font-size:13px;color:#735328}
+.pricing-bag-total39{padding:12px 17px;margin:10px 0 18px;border:1px solid #d8e6f4;background:#f7faff;border-radius:11px;font-size:14px;color:var(--text)}
+.pricing-bag-total39 strong{font:700 19px Arial,sans-serif;color:var(--green)}
+@media(max-width:600px){.pricing-raw-bags39{padding:14px}.pricing-raw-bags39 input{max-width:100%}}

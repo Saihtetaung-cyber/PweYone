@@ -1,0 +1,9 @@
+
+/* V44: Sale-module-only test hints; unrelated pages are untouched. */
+#saleDemoGuide44,.sale-demo-note44{border:1px solid #cddff0;background:#f3f8fe;border-radius:13px;padding:16px 19px;margin:0 0 18px;font-size:14px;line-height:1.9;color:#335978}
+#saleDemoGuide44.demo-warn{border-color:#e8dbbf;background:#fff9ed;color:#80622d}
+#saleDemoGuide44 .row{justify-content:space-between;gap:12px;flex-wrap:wrap}
+#saleDemoGuide44 strong,.sale-demo-note44 strong{font-size:15px;color:var(--ink)}
+.sale-demo-note44{margin:16px 0}
+.sale-demo-note44 .btn{margin:10px 0 4px}
+#saleDemoFeedback44{font-size:13px;color:#396a4c;padding-top:6px}

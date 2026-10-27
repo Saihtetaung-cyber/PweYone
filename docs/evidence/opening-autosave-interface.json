@@ -1,0 +1,108 @@
+{
+  "errors": [],
+  "commands": [
+    {
+      "action": "receipt.create",
+      "input": {
+        "number": "အလ-1000001",
+        "date": "2026-10-25",
+        "party_id": "1065",
+        "warehouse_id": "549",
+        "vehicle": "MDY-123",
+        "note": "",
+        "advance_amount": "0",
+        "advance_account_id": 1065,
+        "carriage_amount": "0",
+        "carriage_account_id": 1065,
+        "lines": [
+          {
+            "product_id": "541",
+            "grade": "A",
+            "bag_type": "weight",
+            "quantity": "1500"
+          }
+        ]
+      }
+    },
+    {
+      "action": "purchase.create",
+      "input": {
+        "date": "2026-10-25",
+        "party_id": "",
+        "delivery": "",
+        "payments": [
+          {
+            "account_id": 1065,
+            "amount": "100000"
+          }
+        ],
+        "payment_amount": "100000",
+        "adjustments": [],
+        "labor": [],
+        "lines": [
+          {
+            "receipt_line_id": "610",
+            "price": "800",
+            "basis": "viss",
+            "purchase_package_viss": "20",
+            "purchase_bags": "50"
+          }
+        ],
+        "recoveries": [],
+        "loan_offsets": []
+      }
+    },
+    {
+      "action": "dispatch.create",
+      "input": {
+        "lot_id": "498",
+        "quantity": "100",
+        "date": "2026-10-25",
+        "vehicle": "",
+        "collector": ""
+      }
+    },
+    {
+      "action": "request.create",
+      "input": {
+        "kind": "home",
+        "amount": "100000",
+        "collector": "Clerk",
+        "reason": "Working cash"
+      }
+    },
+    {
+      "action": "settlement.confirm",
+      "input": {
+        "document_id": "1010",
+        "date": "2026-10-25",
+        "service_mode": "yes",
+        "service_rate": "1",
+        "adjustments": [],
+        "labor": [],
+        "recoveries": [],
+        "loan_offsets": [],
+        "payments": [
+          {
+            "account_id": 1065,
+            "amount": "10000"
+          }
+        ],
+        "payment_amount": "10000"
+      }
+    },
+    {
+      "action": "opening.draft",
+      "input": {
+        "draft": {}
+      }
+    },
+    {
+      "action": "note.save",
+      "input": {
+        "title": "Retry check",
+        "body": "No business fallback"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "results": [
+    "Readonly receiving numbers keep the existing format; server generates unique numbers even after a stale preview is injected; mixed-product receiving and reload passed"
+  ],
+  "errors": []
+}

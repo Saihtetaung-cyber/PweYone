@@ -1,0 +1,12 @@
+
+/* V47 — PURCHASE ONLY: desired bag size, independent viss/standard-bag pricing. */
+#voucher4 .v47-purchase-bag{background:#f6f9fe;border:1px solid #d7e4f2;border-radius:12px;padding:16px 19px;margin:13px 0 17px}
+#voucher4 .v47-purchase-bag .field{margin:0}
+#voucher4 .v47-purchase-bag .field-row{align-items:center}
+#voucher4 .v47-purchase-bag input{background:#fff;border-color:#a9c8e6;font:600 21px Arial,"Myanmar Text",sans-serif}
+#voucher4 .v47-standard{padding:12px 15px;border-radius:10px;background:#fff;border:1px solid #e2e9f1;font-size:13px;color:var(--muted)}
+#voucher4 .v47-standard strong{font:700 19px Arial,sans-serif;color:var(--ink);display:block}
+#voucher4 .v47-formula{background:#eff6fe;border:1px solid #d7e6f6;border-radius:10px;margin-top:12px;padding:11px 14px;font-size:14px;line-height:1.9;color:#385d80}
+#voucher4 .v47-formula strong{color:#194d7f}
+#voucher4 .v47-purchase-hint{font-size:13px;color:var(--muted);margin-top:8px}
+@media(max-width:650px){#voucher4 .v47-purchase-bag{padding:13px}#voucher4 .v47-purchase-bag .field-row{grid-template-columns:1fr}}

@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "results": [
+    "Real HTTP policy create/reload/edit/deactivate/reactivate and loan policy selection passed; existing 2.5% loan retains 833.33 interest after policy changes; staff cannot edit"
+  ],
+  "errors": []
+}

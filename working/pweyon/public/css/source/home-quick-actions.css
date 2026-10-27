@@ -1,0 +1,5 @@
+
+/* V63: only the home quick-action grid; six actions in two rows. */
+.v63-notes-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media screen and (max-width:900px){.v63-notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media screen and (max-width:620px){.v63-notes-grid{grid-template-columns:1fr}}

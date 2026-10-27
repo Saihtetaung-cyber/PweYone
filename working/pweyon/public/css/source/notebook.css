@@ -1,0 +1,12 @@
+
+/* V6.3 — Notebook CRUD inside Settings only. */
+.notebook-row63{align-items:flex-start;gap:14px}
+.notebook-row63 .grow{min-width:0}
+.notebook-row63 .note-preview63{color:var(--muted);font-size:13px;margin-top:4px;white-space:pre-line;overflow-wrap:anywhere}
+.notebook-meta63{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:5px}
+.notebook-actions63{flex-shrink:0}
+.notebook-view63{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;line-height:2}
+@media(max-width:700px){
+  .notebook-row63{flex-wrap:wrap}
+  .notebook-actions63{width:100%;justify-content:flex-end}
+}

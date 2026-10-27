@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "day": "2026-10-25",
+  "role": "staff",
+  "counter": 100,
+  "opening": {
+    "checked": false,
+    "expected": 0,
+    "actual": null,
+    "difference": 0,
+    "note": ""
+  },
+  "bases": {},
+  "transactions": [],
+  "moves": [],
+  "grounds": {},
+  "closed": false,
+  "closing": null,
+  "prices": {},
+  "priceDate": null,
+  "requests": [],
+  "expenses": [],
+  "days": [],
+  "activity": [],
+  "receipts": [],
+  "sales": [],
+  "lots": [],
+  "stockOpening": [],
+  "masters": {
+    "schema": 1,
+    "products": [],
+    "partners": [],
+    "accounts": [],
+    "expenseReasons": [
+      {
+        "id": "ER01",
+        "name": "ပွဲရုံခံ သယ်ယူခ",
+        "active": true
+      },
+      {
+        "id": "ER02",
+        "name": "မီးဖိုး",
+        "active": true
+      },
+      {
+        "id": "ER03",
+        "name": "ရေဖိုး",
+        "active": true
+      },
+      {
+        "id": "ER04",
+        "name": "အထွေထွေ အသုံးစရိတ်",
+        "active": true
+      }
+    ],
+    "handling": {
+      "piecesPerBag": 2,
+      "rate": null
+    },
+    "purchaseDeductions": {
+      "workRate": 0,
+      "laborRate": 0,
+      "borderRate": 0
+    },
+    "changes": [],
+    "purchaseDeductionRates": [],
+    "purchaseDeductionRatesManualOnly": true,
+    "notes": []
+  },
+  "uiVersion": 3,
+  "partnerAdvances": [],
+  "pageRevision": "3.1",
+  "packagingTransactions": [],
+  "adjustments": [],
+  "stockModelVersion": "3.7",
+  "warehouses": [],
+  "packTypes": [],
+  "collectionSlips": [],
+  "v4Audit": [],
+  "transfers": [],
+  "interestPolicy": {
+    "enabled": false,
+    "rates": {}
+  },
+  "req4": true,
+  "laborBagRates": [],
+  "laborRateMasters51": [],
+  "laborMaelMasters51": [],
+  "cashIns50": [],
+  "coa50": [
+    {
+      "id": "COA50-CAPITAL",
+      "code": "3101",
+      "name": "ပိုင်ရှင်ထည့်ဝင်ငွေ (Owner Capital)",
+      "type": "equity",
+      "active": true,
+      "locked": true
+    },
+    {
+      "id": "COA50-OWNERLOAN",
+      "code": "2101",
+      "name": "ပိုင်ရှင်ချေးငွေ (Owner Loan)",
+      "type": "liability",
+      "active": true,
+      "locked": true
+    },
+    {
+      "id": "COA50-LOAN",
+      "code": "2102",
+      "name": "ပြင်ပချေးငွေ (External Loan)",
+      "type": "liability",
+      "active": true,
+      "locked": true
+    },
+    {
+      "id": "COA50-OTHER",
+      "code": "3901",
+      "name": "အခြားငွေဖြည့်သွင်းမှု (Other Funding)",
+      "type": "other",
+      "active": true,
+      "locked": true
+    },
+    {
+      "id": "COA50-TRANSFER",
+      "code": "1901",
+      "name": "ငွေသိမ်းရာအချင်းချင်း လွှဲပြောင်းခြင်း (Internal Transfer)",
+      "type": "transfer",
+      "active": true,
+      "locked": true
+    }
+  ],
+  "traderSettlements74": [],
+  "cleanStart2": {
+    "schema": 1
+  }
+}

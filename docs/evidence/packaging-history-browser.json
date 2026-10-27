@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "results": [
+    "1440px: real projected snapshot and legacy fields render in table/detail, back navigation works, and all 65 packaging records remain reachable at 30/30/5",
+    "390px: real projected snapshot and legacy fields render in table/detail, back navigation works, and all 65 packaging records remain reachable at 30/30/5"
+  ],
+  "errors": []
+}

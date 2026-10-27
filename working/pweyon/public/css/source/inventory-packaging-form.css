@@ -1,0 +1,5 @@
+
+/* V48: packaging form only. All existing module styles remain unchanged. */
+#packForm4 .v48-package-source{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#f4f8fc;margin:3px 0 20px;font-size:14px;line-height:1.9}
+#packForm4 .v48-package-source strong{color:var(--ink)}
+#packForm4 .v48-package-alert{color:var(--red);font-weight:600}

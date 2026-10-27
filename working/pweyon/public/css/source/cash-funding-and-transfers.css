@@ -1,0 +1,18 @@
+
+/* V50: confined to Cash In and COA settings */
+.cash50-action-bar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid #d3e2f2;border-radius:15px;background:#f4f8ff;padding:20px 22px;margin:15px 0 22px}
+.cash50-action-bar strong{font-size:18px;color:var(--ink)}.cash50-action-bar p{font-size:13px;color:var(--muted);margin-top:4px}
+.cash50-action-bar .btn{font-size:14px;min-height:44px;padding:9px 14px}
+.cash50-date{background:#f6f9fd;border-radius:9px;padding:9px 14px;margin-bottom:19px;font-size:14px;color:var(--muted)}
+.cash50-date strong{color:var(--ink)}
+.cash50-mode-help{font-size:14px;padding:12px 15px;color:#3c6287;background:#edf4fd;border:1px solid #d4e6f7;border-radius:10px;margin-bottom:20px}
+.cash50-preview{background:#f6f9fc;border:1px solid var(--line);padding:17px 20px;border-radius:12px;margin:13px 0 19px}
+.cash50-preview .summary-line{font-size:14px}.cash50-preview .summary-line.total{font-size:16px}
+.cash50-balance-title{font-size:13px;color:var(--muted);margin-bottom:7px;font-weight:600}
+.cash50-confirm{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.8;border-radius:10px;padding:11px 12px;background:#fbfcfe}
+.cash50-confirm input{width:19px;min-height:19px;height:19px;flex-shrink:0;margin-top:5px}
+.cash50-history-toolbar{align-items:center}
+.cash50-history .table-wrap{overflow:auto}.cash50-history table{min-width:780px}
+@media(max-width:650px){.cash50-action-bar{padding:16px}.cash50-action-bar .row{width:100%}.cash50-action-bar .row .btn{flex:1}.cash50-history-toolbar>.btn{width:100%}.cash50-preview{padding:15px}}
+
+.cash51-account-help{border:1px solid var(--line);background:#f6f9fc;padding:11px 14px;border-radius:10px;font-size:13px;margin:13px 0 16px;color:var(--muted)}

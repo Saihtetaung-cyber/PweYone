@@ -1,0 +1,6 @@
+.pwe-page-hidden{display:none!important}
+.pwe-pagination{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin:18px 0;padding:12px 0;color:var(--muted,#61758d)}
+.pwe-pagination>span{margin-right:auto;font-size:14px}
+.pwe-pagination button:disabled{opacity:.45;cursor:default}
+@media(max-width:600px){.pwe-pagination>span{flex-basis:100%}.pwe-pagination button{flex:1}}
+@media print{.pwe-pagination{display:none!important}.pwe-page-hidden{display:revert!important}}

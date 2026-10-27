@@ -1,0 +1,4 @@
+
+/* V4.8 — only Service Fee and Labor are automatic; all other deductions are manual amounts. */
+.deduction-mode-note{padding:12px 14px;border:1px solid var(--line);background:#f8fafc;border-radius:10px;font-size:13px;color:var(--muted);min-height:50px;display:flex;align-items:center}
+.manual-deduction-amount4 input{font-variant-numeric:tabular-nums}

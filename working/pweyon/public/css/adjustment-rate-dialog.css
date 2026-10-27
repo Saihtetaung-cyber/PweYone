@@ -1,0 +1,23 @@
+:is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) {
+    width: min(880px, calc(100% - 32px));
+    max-height: calc(100dvh - 48px);
+    margin: auto;
+    padding: 28px;
+    border: 1px solid #dce5f0;
+    border-radius: 16px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    box-shadow: 0 24px 80px #14243933;
+    overflow: auto;
+}
+:is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog)::backdrop { background: #14243966; }
+:is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) > .card { margin: 0; padding: 0; border: 0; box-shadow: none; }
+:is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) .deduction-editor-horizontal { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+:is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) .field, :is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) .input-suffix { min-width: 0; }
+:is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) #modalError:empty { display: none; }
+@media (max-width: 640px) {
+    :is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) { padding: 20px; max-height: calc(100dvh - 32px); }
+    :is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) .deduction-editor-horizontal { grid-template-columns: minmax(0, 1fr) !important; }
+    :is(#adjustmentRateDialog, #serviceRateDialog, #loanPolicyDialog) .deduction-editor-actions { flex-wrap: wrap; }
+}

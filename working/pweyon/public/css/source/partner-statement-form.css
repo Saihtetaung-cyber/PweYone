@@ -1,0 +1,26 @@
+
+/* V37 expanded partner statement, sharing the individual detail ledger components. */
+.statement-form62{padding:24px 28px}
+.statement-top62{margin-bottom:20px}
+.statement-top62 h2{font-size:21px;margin-bottom:4px}
+.statement-fields62{display:grid;grid-template-columns:minmax(230px,2fr) minmax(160px,1fr) minmax(160px,1fr);gap:15px;align-items:end}
+.statement-fields62 .field{margin-bottom:0}
+.statement-form-actions62{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:18px}
+.statement-quick62 .btn{min-width:64px}
+.statement-person62{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:3px 0 22px}
+.statement-person62 h2{font-size:23px}
+.statement-section-heading62{font-size:17px;margin:10px 0 16px}
+.statement-section-heading62 .small{font-weight:400}
+.statement-period-note62{display:flex;gap:9px;align-items:flex-start;border:1px solid #dae4ef;border-radius:12px;background:#eff5fc;padding:14px 17px;margin:25px 0 18px;font-size:13px;color:#526d8b}
+.statement-period-note62 svg{flex-shrink:0;margin-top:3px}
+.statement-tabs62{display:flex;gap:5px;flex-wrap:wrap;background:#edf1f5;border-radius:11px;padding:5px;margin-bottom:16px}
+.statement-tabs62 .tab{font-size:13px;padding:8px 12px;white-space:normal}
+.statement-ledger62{padding:18px 0;overflow-x:auto}
+.statement-ledger62 h3{padding:0 20px}
+.statement-ledger62>.summary-box,.statement-ledger62>div>.summary-box{margin-left:18px;margin-right:18px}
+.statement-ledger62 .table-wrap{overflow-x:auto}
+.statement-ledger62 th,.statement-ledger62 td{white-space:normal;min-width:100px}
+.statement-body62 .partner-summary62 .stat{min-width:0}
+@media(max-width:850px){.statement-fields62{grid-template-columns:1fr 1fr}.statement-fields62 .field:first-child{grid-column:1 / -1}}
+@media(max-width:600px){.statement-fields62{grid-template-columns:1fr}.statement-fields62 .field:first-child{grid-column:1}.statement-form62{padding:19px}.statement-form-actions62>.btn-primary{width:100%}.statement-quick62{width:100%}.statement-tabs62{overflow:auto;flex-wrap:nowrap}.statement-tabs62 .tab{white-space:nowrap}.statement-person62>.btn{width:100%}}
+@media print{.statement-tabs62,.statement-quick62{display:none!important}.statement-period-note62{border:0;background:white;color:#222}.statement-body62 .card{border:0}}

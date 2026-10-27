@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "checks": [
+    "Opening a per-viss form does not select standard-bag mode or autofill its quote",
+    "Current product and grade quote fills editable standard-bag price directly",
+    "Manual price survives quantity and charge recalculation and is used by purchase rows",
+    "Unit changes keep independent manual drafts; bag prices never carry into per-viss prices",
+    "An intentionally cleared bag price stays empty after switching modes",
+    "Stale daily quote is not used",
+    "Other grade does not supply a price",
+    "Missing or zero quote leaves manual entry available",
+    "Mixed-grade voucher fills only matching lines",
+    "Sales do not inherit purchase market prices"
+  ],
+  "errors": []
+}

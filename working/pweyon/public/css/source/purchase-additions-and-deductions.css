@@ -1,0 +1,9 @@
+
+#voucher4 .purchase-adjustment-actions2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+#voucher4 .purchase-adjustment-actions2 .btn{min-height:46px;white-space:normal;text-align:left;font-size:13px;line-height:1.9}
+#voucher4 .purchase-addition-row2{background:#f7faff;border:1px solid #ccdcf0;border-radius:10px;padding:16px;margin-top:12px;box-shadow:none}
+#voucher4 .purchase-addition-title2{color:#2864ab;font-size:14px}
+#voucher4 .purchase-addition-row2 .field-row{align-items:start;margin-bottom:0}
+#voucher4 .purchase-addition-row2 select,#voucher4 .purchase-addition-row2 input{max-width:100%;min-width:0}
+#voucher4 .purchase-signed-summary2 .total{border-top:2px solid #c8d8eb;margin-top:8px;padding-top:14px}
+@media(max-width:620px){#voucher4 .purchase-adjustment-actions2{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}#voucher4 .purchase-adjustment-actions2 .btn{width:100%;justify-content:flex-start}#voucher4 .purchase-addition-row2 .field-row{grid-template-columns:minmax(0,1fr)}}

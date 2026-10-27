@@ -1,0 +1,7 @@
+
+/* Cash navigation matches the existing inventory tabs; wrap by available width. */
+.cash2-shell .cash2-tabs.tabs{display:flex;flex-wrap:wrap;align-items:stretch;justify-content:flex-start;gap:8px;padding:0 0 4px;margin:0 0 24px;background:#edf2f8;border:0;border-radius:0;overflow:visible}
+.cash2-shell .cash2-tabs.tabs>.tab{display:block;flex:0 0 auto;width:auto;max-width:100%;min-height:42px;padding:9px 14px;margin:0!important;border:1px solid #d6e1eb!important;border-radius:10px!important;background:transparent!important;color:#6a7c96!important;box-shadow:none;font-size:12px;font-weight:400;line-height:1.8;white-space:normal;overflow-wrap:anywhere}
+.cash2-shell .cash2-tabs.tabs>.tab.active{background:#2864ab!important;color:#fff!important;border-color:#2864ab!important;box-shadow:0 1px 3px #102f5112;font-weight:600}
+@media(max-width:620px){.cash2-shell .cash2-tabs.tabs{gap:8px;margin-bottom:18px}.cash2-shell .cash2-tabs.tabs>.tab{padding:9px 14px;min-height:42px}}
+

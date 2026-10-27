@@ -1,0 +1,8 @@
+
+#saleSource73{border:1px solid #cbdcf2;background:#f2f7fe;border-radius:12px;padding:18px;margin:0 0 18px;line-height:1.95}
+#saleSource73[hidden]{display:none}
+#saleSource73 p{margin:9px 0;font-size:13px}
+#saleSource73 .sale-source-actions73{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+#saleSource73 .btn{white-space:normal;text-align:left}
+#receiveSupplierHelp73{margin-bottom:16px}
+@media(max-width:600px){#saleSource73{padding:14px}#saleSource73 .btn{width:100%}}

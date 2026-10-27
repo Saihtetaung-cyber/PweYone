@@ -1,0 +1,34 @@
+
+/* V56 — simple structured forms for receive / purchase / sale. */
+.simple-form{display:flex;flex-direction:column;gap:18px}
+.simple-form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:#f7fafc}
+.simple-form-head strong{display:block;font-size:18px;color:var(--ink)}
+.simple-form-head small{display:block;margin-top:3px;color:var(--muted);font-size:14px;line-height:1.85}
+.simple-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--light);color:var(--green);font-size:13px;font-weight:700;white-space:nowrap}
+.simple-form-section{padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.simple-form-section + .simple-form-section{margin-top:0}
+.simple-form-title{display:flex;align-items:center;gap:10px;margin-bottom:12px;color:var(--ink)}
+.simple-form-title .num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--light);color:var(--green);font-size:14px;font-weight:700;flex-shrink:0}
+.simple-form-title strong{font-size:16px}
+.simple-form-note{font-size:14px;color:var(--muted);line-height:1.85;margin:-4px 0 14px}
+.simple-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.simple-form-grid.single{grid-template-columns:1fr}
+.simple-inline-card{padding:14px 16px;border:1px solid #dbe6f2;border-radius:14px;background:#f8fbff}
+.simple-inline-card strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.simple-inline-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.8}
+.simple-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.simple-summary.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.simple-summary-item{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fbfcfd}
+.simple-summary-item .label{font-size:13px;color:var(--muted);line-height:1.7}
+.simple-summary-item strong{display:block;font-size:22px;color:var(--ink);line-height:1.35;margin-top:6px}
+.simple-summary-item small{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.simple-divider{height:1px;background:var(--line);margin:4px 0}
+.modal .simple-form .field-row{gap:16px}
+.modal .simple-form label{font-weight:700;color:var(--ink)}
+.modal .simple-form .field-help{margin-top:8px}
+.modal .simple-form details.details{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fbfcfd}
+.modal .simple-form details.details summary{font-weight:700;color:var(--ink)}
+@media(max-width:760px){
+ .simple-form-head{flex-direction:column;align-items:flex-start}
+ .simple-form-grid,.simple-summary,.simple-summary.two{grid-template-columns:1fr}
+}

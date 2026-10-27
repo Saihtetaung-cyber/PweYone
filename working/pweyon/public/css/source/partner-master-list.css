@@ -1,0 +1,31 @@
+
+/* V70 — Settings > Trader / Buyer list layout only. */
+@media screen {
+.v3-partner-row.partner-row62{
+ display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-areas:"icon identity" ". summary" ". actions";
+ gap:8px 16px;align-items:start;padding:20px 22px;min-width:0;
+}
+.partner-row62>.icon-box{grid-area:icon;align-self:start;width:44px;height:44px;margin:0}
+.partner-row62>.grow{grid-area:identity;min-width:0;width:auto;flex:none;flex-basis:auto;overflow-wrap:normal}
+.partner-row62>.grow>strong{display:block;font-size:16px;line-height:1.9;white-space:normal;word-break:normal;overflow-wrap:anywhere}
+.partner-row62>.grow>.record-meta{font-size:12px;line-height:1.9;margin-top:3px;overflow-wrap:anywhere}
+.partner-row62>.partner-mini62{grid-area:summary;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 22px;order:initial;width:auto;min-width:0;padding:0;margin:1px 0 3px;font-size:12px;line-height:1.9}
+.partner-row62>.partner-mini62>span{display:inline-flex;align-items:baseline;gap:6px;max-width:100%;white-space:nowrap}
+.partner-row62>.partner-mini62 strong{font-size:14px;line-height:1.9;font-variant-numeric:tabular-nums;white-space:nowrap}
+.partner-row62>.partner-actions62{grid-area:actions;display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:8px;order:initial;min-width:0;width:auto;margin:5px 0 0;flex-shrink:1}
+.partner-row62>.partner-actions62>.btn{flex:0 1 auto;max-width:100%;min-height:42px;padding:8px 12px;font-size:12px;line-height:1.9;white-space:normal;overflow-wrap:anywhere}
+@media(min-width:1400px){
+ .v3-partner-row.partner-row62{grid-template-columns:44px minmax(260px,1fr) auto;grid-template-areas:"icon identity actions" ". summary actions";gap:5px 18px}
+ .partner-row62>.partner-actions62{align-self:center;margin:0;max-width:470px}
+}
+@media(max-width:600px){
+ .v3-partner-row.partner-row62{grid-template-columns:36px minmax(0,1fr);grid-template-areas:"icon identity" ". summary" "actions actions";padding:18px 16px;gap:9px 12px}
+ .partner-row62>.icon-box{width:36px;height:36px}
+ .partner-row62>.grow>strong{font-size:16px}
+ .partner-row62>.partner-mini62{gap:7px 15px}
+ .partner-row62>.partner-mini62 strong{font-size:13px}
+ .partner-row62>.partner-actions62{margin-top:8px;gap:8px;justify-content:flex-start}
+ .partner-row62>.partner-actions62>.btn{min-height:44px;padding:8px 11px}
+}
+}
+

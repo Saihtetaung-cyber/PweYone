@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "results": [
+    "owner at 1440: sparse drafts review, existing amounts, reload serialization and approval guards passed",
+    "owner at 390: sparse drafts review, existing amounts, reload serialization and approval guards passed",
+    "staff at 1440: sparse drafts review, existing amounts, reload serialization and approval guards passed",
+    "staff at 390: sparse drafts review, existing amounts, reload serialization and approval guards passed"
+  ],
+  "errors": []
+}

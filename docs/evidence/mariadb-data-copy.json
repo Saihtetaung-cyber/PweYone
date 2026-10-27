@@ -1,0 +1,177 @@
+{
+    "source": {
+        "engine": "8.4.13",
+        "port": 3307
+    },
+    "target": {
+        "engine": "10.11.16-MariaDB",
+        "port": 3306
+    },
+    "database": "pweyon",
+    "migrationsActuallyRun": 30,
+    "foreignKeyChecks": 1,
+    "allRowsMatched": true,
+    "tables": {
+        "adjustment_rates": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "business_days": {
+            "rows": 1,
+            "sha256": "2e4f3be6aa3df1d58c325ab6a18bc837bf7f587ce7582fe5b57b99654250089d",
+            "matched": true
+        },
+        "business_settings": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "cache": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "cache_locks": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "cash_accounts": {
+            "rows": 5,
+            "sha256": "8fc03321196c337ca69f86be54452be812bdb4a4b6d041ed8d2ebb4198e2cd9e",
+            "matched": true
+        },
+        "expense_reasons": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "failed_jobs": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "funding_categories": {
+            "rows": 5,
+            "sha256": "0f6e22e936522f89b019114a83344a1b7833671f02631732b93e9536835242fc",
+            "matched": true
+        },
+        "job_batches": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "jobs": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "labor_rates": {
+            "rows": 1,
+            "sha256": "9892b6e0cc19162b7f994fd1b579681b0d70c1bf74108a3e2abe43f566855066",
+            "matched": true
+        },
+        "operation_locks": {
+            "rows": 1,
+            "sha256": "a83bfea55516eaf44a55ca0d014d8e437ae1acaef94b92fcf6506636cb588647",
+            "matched": true
+        },
+        "partners": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "password_reset_tokens": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "products": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "sessions": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "users": {
+            "rows": 1,
+            "sha256": "c48c8383b978209fcd8f0f518fbaaf2dba766197048953613754a7ca9d0f448a",
+            "matched": true
+        },
+        "warehouses": {
+            "rows": 1,
+            "sha256": "a464ab30154fb95d5709e0c3827ca9c036604fd42a3f03e017f973bfdbb4be41",
+            "matched": true
+        },
+        "command_receipts": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "daily_prices": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "documents": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "package_types": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "audit_logs": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "cash_entries": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "document_lines": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "recoveries": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "payments": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "stock_lots": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "payment_allocations": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "stock_checks": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        },
+        "stock_events": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "matched": true
+        }
+    },
+    "backupSha256": "d80cc57dd12050ffb8235ce139c7be5fde1d50ac150c9f9f36d4fc990e289a82"
+}

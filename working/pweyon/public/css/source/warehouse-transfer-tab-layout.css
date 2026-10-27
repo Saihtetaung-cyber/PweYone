@@ -1,0 +1,6 @@
+
+.transfer82-header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:22px 0}
+.transfer82-header h3{font-size:21px;margin:0;line-height:1.85}.transfer82-header p{font-size:13px;line-height:1.95;color:var(--muted);margin:5px 0 0}
+.transfer82-header>div{min-width:0}.transfer82-header>.btn{flex-shrink:0;white-space:normal;text-align:center}
+.transfer82-history{padding:24px}.transfer82-history h3{font-size:18px;margin:0 0 20px;line-height:1.9}.transfer82-history .table-wrap{max-width:100%;overflow-x:auto}
+@media(max-width:700px){.transfer82-header{align-items:flex-start;flex-direction:column;gap:14px;margin:18px 0}.transfer82-header h3{font-size:18px}.transfer82-header>.btn{width:100%}.transfer82-history{padding:17px}.transfer82-history h3{font-size:16px}.transfer82-history table{min-width:490px}}

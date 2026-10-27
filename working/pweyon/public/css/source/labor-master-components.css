@@ -1,0 +1,6 @@
+
+/* V5.1 — Labor rate / Mael CRUD */
+.labor-master-grid-51{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.labor-master-grid-51 .card{margin:0}
+.labor-master-actions-51{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+@media(max-width:900px){.labor-master-grid-51{grid-template-columns:1fr}}

@@ -1,0 +1,1 @@
+{"private":true,"dependencies":{"@babel/parser":"^7.28.0","jsdom":"^26.1.0","pdfjs-dist":"^5.4.0"},"devDependencies":{"playwright-core":"^1.64.1"}}

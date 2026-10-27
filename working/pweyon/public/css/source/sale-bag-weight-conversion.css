@@ -1,0 +1,5 @@
+
+/* V46: SALE ONLY - buyer-requested per-bag weight and pricing mode hint. */
+#voucher4 #voucherLines4 .v46-pricing-hint{font-size:13px;margin-top:9px;line-height:1.95;color:var(--muted)}
+#voucher4 #voucherLines4 input[id^="vBuyerBag46"]{background:#f7fbff;border-color:#b8cfe4}
+#voucher4 #voucherLines4 .v46-pricing-hint strong{color:var(--ink)}

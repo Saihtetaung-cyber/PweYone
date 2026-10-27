@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "results": [
+    "Incomplete approval guides the owner to the required stock review without bypassing checks",
+    "Reviewed opening with an untouched party approves over real HTTP, remains approved after reload and creates no fake stock"
+  ],
+  "errors": []
+}

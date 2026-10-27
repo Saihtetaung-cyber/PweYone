@@ -1,0 +1,26 @@
+
+#main .sold2-summary{margin:18px 0;padding:20px;border:1px solid #dce6f2;border-radius:12px;background:#f7faff;min-width:0}
+#main .sold2-summary h3{margin:0 0 14px;font-size:16px;line-height:1.9;color:#245f9f}
+#main .sold2-line+.sold2-line{margin-top:18px;padding-top:18px;border-top:1px solid #dce6f2}
+#main .sold2-line-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;overflow-wrap:anywhere}
+#main .sold2-line-head>span{color:#687d96;font-size:12px}
+#main .sold2-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#main .sold2-metrics>div{min-width:0;display:flex;flex-direction:column;gap:6px}
+#main .sold2-metrics span{font-size:12px;line-height:1.9;color:#60758e}
+#main .sold2-metrics strong{font-size:18px;line-height:1.9;font-variant-numeric:tabular-nums;color:#234e80;overflow-wrap:anywhere}
+#main .sold2-help{margin:14px 0 0;font-size:12px;line-height:2;color:#60758e;overflow-wrap:anywhere}
+#main .sold2-links{border-top:1px solid #dce6f2;margin-top:16px;padding-top:12px}
+#main .sold2-links>summary{cursor:pointer;color:#245f9f;font-size:13px;line-height:2;padding:4px 0}
+#main .sold2-links>summary:focus-visible{outline:3px solid #8bb7e9;outline-offset:3px;border-radius:4px}
+#main .sold2-link-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding:12px;background:white;border:1px solid #e0e8f2;border-radius:9px}
+#main .sold2-link-row>div:first-child{min-width:0;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere;font-size:13px;line-height:1.9}
+#main .sold2-link-row>div:first-child>span{color:#60758e;font-size:12px}
+#main .sold2-actions{display:flex;flex-wrap:wrap;gap:8px}
+#main .sold2-actions button{font-size:12px;min-height:44px}
+#main .sold2-disabled{cursor:not-allowed;opacity:.6;white-space:normal;text-align:center}
+#main .sold2-compact{background:#f6f9fd;padding:16px}
+#main .sold2-compact h3{display:none}
+#soldReceiptPurchaseGuard2 .sold2-summary h3{display:none}
+#main .sold2-compact .sold2-metrics strong{font-size:16px}
+@media(max-width:650px){#main .sold2-summary{padding:15px}#main .sold2-metrics{grid-template-columns:minmax(0,1fr);gap:12px}#main .sold2-metrics>div{flex-direction:row;align-items:baseline;justify-content:space-between;gap:12px}#main .sold2-metrics>div+div{border-top:1px solid #e0e8f2;padding-top:12px}#main .sold2-metrics span{flex:1}#main .sold2-metrics strong{font-size:16px;text-align:right;flex:1}#main .sold2-line-head{flex-direction:column;gap:4px}#main .sold2-link-row{align-items:stretch}#main .sold2-actions{width:100%;flex-direction:column}#main .sold2-actions button{flex:1;white-space:normal}#main .sold2-guard-page .modal-footer{display:flex;flex-direction:column}#main .sold2-guard-page .modal-footer>button{width:100%}#main .sold2-guard-page .modal-footer>.sold2-trader{order:-1}}
+

@@ -1,0 +1,11 @@
+/development/tools/node_modules/
+/development/tools/.npm-cache/
+/development/runtime/
+/archive/private/
+**/storage/app/private/account-recovery/
+/reference
+*.log
+/.phpunit.cache/
+**/.env
+**/.env.*
+!**/.env.example

@@ -1,0 +1,10 @@
+
+#stockSearchFilters81{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(0,1fr)) auto;gap:16px;align-items:end;margin-bottom:10px}
+#stockSearchFilters81>.field{margin:0;min-width:0}#stockSearchFilters81 input{width:100%;min-width:0;box-sizing:border-box}#stockSearchFilters81>.btn{min-height:53px;white-space:normal;line-height:1.8;text-align:center}
+#stockSearchFilters81 label{line-height:1.9}
+#stockFilterError81{margin:8px 0 12px;padding:10px 13px;border-radius:8px;background:#fff3ec;color:#974325;font-size:13px;line-height:1.9}
+#stockFilterError81[hidden]{display:none!important}
+#stockFilterCount81{margin:8px 0 14px;color:var(--muted);font-size:12px;line-height:1.9}
+@media(max-width:1100px){#stockSearchFilters81{grid-template-columns:repeat(2,minmax(0,1fr))}#stockSearchFilters81>.field:first-child{grid-column:1/-1}#stockSearchFilters81>.btn{grid-column:1/-1;justify-self:end;min-height:44px}}
+@media(max-width:600px){#stockSearchFilters81{grid-template-columns:minmax(0,1fr);gap:12px}#stockSearchFilters81>.btn{width:100%;justify-self:stretch}}
+

@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "results": [
+    "Width 1440: active products, search, selection, grade update, quantity preservation, keyboard, empty state and outside close passed",
+    "Width 390: active products, search, selection, grade update, quantity preservation, keyboard, empty state and outside close passed"
+  ],
+  "errors": []
+}

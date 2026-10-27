@@ -1,0 +1,6 @@
+{
+  "errors": [],
+  "printCalls": 4,
+  "csvDownloads": 1,
+  "scope": "DOM print markup and CSV payload; physical printing/browser PDF output not tested"
+}

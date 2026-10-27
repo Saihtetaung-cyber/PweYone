@@ -1,0 +1,17 @@
+{
+    "date": "2026-10-26",
+    "driver": "mariadb",
+    "server": "10.11.16-MariaDB",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "database": "pweyon",
+    "migrations": 30,
+    "matchedDataTables": 32,
+    "allOriginalRowsUnchanged": true,
+    "ownerAccountAndPasswordHashPreserved": true,
+    "engines": [
+        "InnoDB"
+    ],
+    "testUserCannotReadApplicationDatabase": true,
+    "testFixtureUsersRemaining": 0
+}

@@ -1,0 +1,10 @@
+
+#voucher4 .purchase-adjustment-actions2.purchase-dropdown-actions2{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 14px;padding:16px;border:1px solid #d5e1ee;border-radius:10px;background:#f8fbff}
+#voucher4 .purchase-adjustment-picker2{min-width:0}
+#voucher4 .purchase-adjustment-picker2 label{display:block;font-size:13px;line-height:1.9;color:#38516c;margin:0 0 7px}
+#voucher4 .purchase-adjustment-picker2 select{box-sizing:border-box;display:block;width:100%;min-width:0;max-width:100%;min-height:48px;margin:0;background:#fff;border:1px solid #ccd9ea;border-radius:8px;font:inherit;font-size:14px;padding:9px 12px;color:var(--ink)}
+#voucher4 #purchaseAdjustmentAdd2{min-height:48px;margin:0;white-space:nowrap;justify-content:center}
+#voucher4 #purchaseAdjustmentAdd2:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+#voucher4 #purchaseAdjustmentHint2{grid-column:1 / -1;font-size:12px;line-height:1.9;color:#59718c;margin:0}
+#voucher4 #purchaseAdjustmentKind2:focus-visible,#voucher4 #purchaseAdjustmentAdd2:focus-visible{outline:3px solid #9ec4f3;outline-offset:2px}
+@media(max-width:620px){#voucher4 .purchase-adjustment-actions2.purchase-dropdown-actions2{grid-template-columns:minmax(0,1fr);padding:13px;gap:10px}#voucher4 #purchaseAdjustmentAdd2{width:100%;white-space:normal}#voucher4 .purchase-adjustment-picker2 select{font-size:13px}}

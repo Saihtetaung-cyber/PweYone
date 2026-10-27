@@ -1,0 +1,19 @@
+
+.ui-language-switch{display:inline-flex;align-items:stretch;gap:3px;padding:4px;border:1px solid #d7e2ee;border-radius:11px;background:#f1f5fa;flex:0 0 auto;}
+.ui-language-switch>button{display:flex;align-items:center;justify-content:center;min-height:38px;min-width:65px;padding:6px 12px;margin:0;border:1px solid transparent;border-radius:8px;background:transparent;color:#61758e;font-family:inherit;font-size:12px;font-weight:500;line-height:1.8;white-space:nowrap;cursor:pointer;}
+.ui-language-switch>button.active{background:#2864ab;border-color:#2864ab;color:#fff;font-weight:600;box-shadow:0 1px 3px #102f5112}
+.ui-language-switch>button:hover:not(.active){background:#e5edf7;color:#245b9c}
+.ui-language-switch>button:focus-visible{outline:3px solid #73a4dc;outline-offset:2px}
+html[lang=en] .v2-header-inner:before{content:'Daily Business Management'}
+html[lang=en] #topNav:before{content:'Modules'}
+html[lang=en] .top-nav-btn{line-height:1.6}
+html[lang=en] #main .v3-master-grid>.v3-master-card>strong{line-height:1.65}
+html[lang=en] #main .daily53-line strong{font-size:13px}
+@media(max-width:580px){
+ .v2-header-inner{min-height:198px!important;padding-top:12px!important;padding-bottom:78px!important;gap:10px!important;justify-content:space-between!important;}
+ .v2-header{min-height:198px!important;}
+ .v2-header-inner>.v2-brand{flex:1 1 100%;width:100%!important;}
+ .v2-header-inner>.v2-role{margin-left:0;}
+ .ui-language-switch>button{min-width:64px;min-height:36px;padding:6px 10px;}
+}
+@media print{.ui-language-switch{display:none!important}}

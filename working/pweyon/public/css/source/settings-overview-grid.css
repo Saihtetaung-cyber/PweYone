@@ -1,0 +1,59 @@
+
+/* Settings overview only: four columns, three rows; existing actions and data retained. */
+#main .v3-master-grid{
+ display:grid;grid-template-columns:repeat(4,minmax(224px,1fr))!important;
+ grid-auto-rows:1fr;gap:16px;padding:3px 3px 12px;
+ max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;
+ scrollbar-width:thin;scrollbar-color:#b6c9e2 #edf2f8;
+}
+#main .v3-master-grid>.v3-master-card{
+ display:grid;grid-template-columns:40px minmax(0,1fr);
+ grid-template-rows:minmax(58px,auto) minmax(48px,auto) auto;
+ column-gap:12px;row-gap:12px;align-content:start;align-items:center;
+ width:100%;min-width:0;min-height:224px;height:100%;margin:0;
+ padding:20px;text-align:left;color:var(--ink);background:#fff;
+ border:1px solid #dce5f0;border-radius:14px;box-shadow:0 2px 5px #24476b04;
+ position:relative;transition:border-color .15s,background-color .15s,box-shadow .15s;
+}
+#main .v3-master-grid>.v3-master-card:hover{
+ background:#f8fbff;border-color:#91b3df;box-shadow:0 3px 10px #24476b0b;
+}
+#main .v3-master-grid>.v3-master-card:active{background:#edf4ff}
+#main .v3-master-grid>.v3-master-card:focus-visible{outline:3px solid #73a4dc;outline-offset:0}
+#main .v3-master-grid>.v3-master-card>.icon-box{
+ grid-column:1;grid-row:1;align-self:start;display:flex;align-items:center;justify-content:center;
+ width:40px;height:40px;min-width:40px;margin:3px 0 0;padding:9px;
+ background:#edf4ff;color:var(--green);border:1px solid #e2ecfa;border-radius:11px;
+}
+#main .v3-master-grid>.v3-master-card>.icon-box svg{width:21px;height:21px;flex:none}
+#main .v3-master-grid>.v3-master-card>strong{
+ grid-column:2;grid-row:1;align-self:start;display:block;
+ font-size:15px;font-weight:600;line-height:1.95;margin:0;padding:0;
+ min-width:0;overflow-wrap:anywhere;letter-spacing:0;
+}
+#main .v3-master-grid>.v3-master-card>p{
+ grid-column:1/-1;grid-row:2;align-self:start;
+ font-size:12px;line-height:1.95;color:#687b91;margin:0;padding:0;
+ white-space:normal;overflow-wrap:anywhere;
+}
+#main .v3-master-grid .v3-card-bottom{
+ grid-column:1/-1;grid-row:3;align-self:end;
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+ gap:10px;width:100%;min-width:0;margin:0;padding:13px 0 0;
+ border-top:1px solid #edf1f6;color:#62758c;font-size:11px;line-height:1.9;
+}
+#main .v3-master-grid .v3-card-bottom>span:first-child{
+ display:block;min-width:0;max-width:100%;min-height:21px;overflow-wrap:anywhere;
+}
+#main .v3-master-grid .v3-card-bottom .end-link{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ width:100%;min-height:24px;margin:0;padding:0;color:var(--green);
+ font-size:12px;line-height:1.9;font-weight:600;white-space:normal;
+}
+#main .v3-master-grid .v3-card-bottom .end-link svg{width:17px;height:17px;flex:none}
+#main .v3-master-grid>.v3-master-card.op69-entry{
+ background:#f8fbff!important;border-color:#bdd0ea!important;
+}
+#main .v3-master-grid>.v3-master-card.op69-entry:hover{background:#edf4ff!important;border-color:#91b3df!important}
+@media(prefers-reduced-motion:reduce){#main .v3-master-grid>.v3-master-card{transition:none}}
+@media print{#main .v3-master-grid{overflow:visible;grid-template-columns:repeat(4,minmax(0,1fr))!important}}

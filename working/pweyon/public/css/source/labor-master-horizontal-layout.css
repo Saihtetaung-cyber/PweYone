@@ -1,0 +1,43 @@
+
+/* V5.2 — Labor master UI stays horizontal. */
+.labor-master-grid-51{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:flex-start;
+  gap:18px;
+  overflow-x:auto;
+  padding-bottom:4px;
+}
+.labor-master-grid-51>.card{
+  flex:1 0 620px;
+  min-width:620px;
+  margin:0;
+}
+.labor-master-grid-51 .card-title{
+  flex-direction:row!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+}
+.labor-master-grid-51 .card-title>div:first-child{min-width:0;flex:1}
+.labor-master-grid-51 .card-title>.btn{flex:0 0 auto}
+.labor-master-grid-51 .table-wrap{overflow-x:auto}
+.labor-master-grid-51 table{min-width:570px}
+.labor-master-grid-51 th,
+.labor-master-grid-51 td{white-space:nowrap}
+.labor-master-grid-51 td .row.wrap{flex-wrap:nowrap!important}
+
+.labor-master-form-grid-52{
+  display:grid;
+  grid-template-columns:minmax(220px,1.25fr) minmax(190px,1fr) minmax(180px,.8fr);
+  gap:18px;
+  min-width:760px;
+  align-items:end;
+}
+.labor-master-form-grid-52 .field{margin-bottom:0}
+#modalRoot .modal.wide .modal-body{overflow-x:auto}
+
+/* Keep the labor setup horizontal instead of stacking at tablet widths. */
+@media(max-width:900px){
+  .labor-master-grid-51{display:flex!important;grid-template-columns:none!important}
+}

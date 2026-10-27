@@ -1,0 +1,76 @@
+
+/* V55 — scoped Purchase/Sale voucher presentation only. All existing work flows retained. */
+.work-page.v55-voucher-page {max-width:1400px!important}
+.work-page.v55-voucher-page .page-heading {margin-bottom:19px}
+.work-page.v55-voucher-page #modalTitle {font-size:28px;font-weight:800;letter-spacing:0;color:#1b3156}
+.work-page.v55-voucher-page .page-panel {background:#f7f9fd;border:1px solid #dfe7f2;box-shadow:0 10px 38px #1d37600b;border-radius:20px;overflow:visible}
+.work-page.v55-voucher-page .page-panel>.modal-body {padding:24px 24px 20px}
+#voucher4.v55-voucher {--v55-accent:#2861bd;--v55-light:#edf4ff;--v55-line:#dbe5f2;--v55-shadow:0 3px 18px rgba(26,65,115,.045)}
+#voucher4.v55-voucher.v55-purchase {--v55-accent:#2462ae;--v55-light:#eef6ff}
+#voucher4.v55-voucher.v55-sale {--v55-accent:#18756c;--v55-light:#eef9f6}
+#voucher4 .v55-intro {display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:18px 22px;border:1px solid var(--v55-line);background:linear-gradient(115deg,var(--v55-light),#fff);border-radius:15px;margin-bottom:22px}
+#voucher4 .v55-intro strong {font-size:16px;color:#223855;line-height:1.8}
+#voucher4 .v55-intro p{margin:3px 0 0;font-size:12px;color:#6c7e96;line-height:1.95}
+#voucher4 .v55-intro-label {padding:5px 12px;border:1px solid #d9e5f4;border-radius:99px;background:#fff;color:var(--v55-accent);font-size:12px;font-weight:700;white-space:nowrap}
+#voucher4 .v55-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(285px,330px);align-items:start;gap:22px}
+#voucher4 .v55-main{display:flex;flex-direction:column;gap:18px;min-width:0}
+#voucher4 .v55-section{background:#fff;border:1px solid var(--v55-line);box-shadow:var(--v55-shadow);border-radius:16px;padding:22px;min-width:0}
+#voucher4 .v55-section-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+#voucher4 .v55-section-num{height:32px;width:32px;display:grid;place-items:center;flex:0 0 32px;font:700 13px Arial,sans-serif;border-radius:10px;background:var(--v55-light);color:var(--v55-accent)}
+#voucher4 .v55-section-heading h2{font-size:17px;font-weight:800;line-height:1.55;margin:0;color:#203a59}
+#voucher4 .v55-section-heading p{font-size:11px;line-height:1.8;margin:3px 0 0;color:#71819a}
+#voucher4 .v55-section>.field-row + .field-row{margin-top:6px}
+#voucher4 .v55-section .field{min-width:0}
+#voucher4 .v55-section .field label {font-size:13px;font-weight:700;color:#435a78;margin-bottom:7px}
+#voucher4 .v55-section input,#voucher4 .v55-section select,#voucher4 .v55-section textarea {min-height:49px;font-size:15px;background:#fff;border-radius:10px;border:1px solid #cad8e8;color:#1f344d;padding:10px 14px;transition:border-color .12s,box-shadow .12s}
+#voucher4 .v55-section input:focus,#voucher4 .v55-section select:focus,#voucher4 .v55-section textarea:focus {border-color:#5a93d6;box-shadow:0 0 0 3px #dbeaff;outline:0}
+#voucher4 .v55-section input[readonly]{background:#f5f7fa;color:#667b92;border-color:#e2e9f2}
+#voucher4 .v55-section .field-help {color:#72839b;font-size:11px;line-height:1.9;margin-top:5px}
+#voucher4 .v55-section>.note {border-radius:10px;margin:14px 0 0;font-size:12px}
+#voucher4 .v55-goods #voucherLines4{margin-top:0!important}
+#voucher4 .v55-goods .req-line{margin:0 0 14px;padding:20px;background:#fbfdff;border:1px solid #dce6f3;border-radius:14px}
+#voucher4 .v55-goods .req-line:last-child{margin-bottom:0}
+#voucher4 .v55-goods .req-line>.row.between.mb{padding-bottom:13px;margin-bottom:16px;border-bottom:1px solid #e5edf7}
+#voucher4 .v55-goods .req-line>.row.between.mb h3{font-size:15px;font-weight:800;color:#234063}
+#voucher4 .v55-goods .req-line .field-row{gap:14px}
+#voucher4 .v55-goods .req-line .field-row+.field-row{margin-top:10px}
+#voucher4 .v55-goods input[id^="vq"],#voucher4 .v55-goods input[id^="vr"]{font-variant-numeric:tabular-nums;font-weight:700}
+#voucher4 .v55-goods [id^="lineSummary4"]{font-size:12px;line-height:1.9;margin-top:13px;padding-top:5px;color:#627897}
+#voucher4 .v55-target-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(180px,.92fr);gap:13px;align-items:stretch!important}
+#voucher4 .v55-target-grid>.field{min-width:0}
+#voucher4 .v55-target-grid .v47-standard{background:#fff;padding:13px 14px;margin:0;border:1px solid #d7e4f4;display:flex;flex-direction:column;justify-content:center;font-size:12px}
+#voucher4 .v55-target-grid .v47-standard strong{font-size:20px;margin:3px 0}
+#voucher4 .v47-purchase-bag{background:#f0f6ff;border:1px solid #cddff5;border-radius:12px;margin:14px 0 15px;padding:18px}
+#voucher4 .v47-purchase-bag input{background:#fff!important;font:700 20px Arial,'Myanmar Text',sans-serif;border-color:#a6c8eb}
+#voucher4 .v55-count-state{margin-top:12px;background:#fff;border:1px solid #d8e7f6;border-radius:10px;padding:11px 14px;font-size:12px;color:#3c5e81;line-height:2}
+#voucher4 .v55-count-state strong{color:#1f5c9a;font-size:14px}
+#voucher4 .v55-count-state.v55-alert{background:#fff4e8;border-color:#f1d29e;color:#93652d}
+#voucher4 .v55-count-state.v55-alert strong{color:#a04f2a}
+#voucher4 .pricing-raw-bags39 {padding:16px;margin:12px 0;background:#fff9ed;border-color:#f0e4c5}
+#voucher4 .pricing-raw-bags39 input{max-width:none;font-size:18px}
+#voucher4 .pricing-raw-bags39 .pricing-received39 strong{font-size:17px}
+#voucher4 .pricing-bag-total39{margin:12px 0 0}
+#voucher4 .v47-formula{padding:12px 14px;border-radius:9px;font-size:12px;margin:10px 0 0}
+#voucher4 .v55-fees>details.req-details {margin:0!important;background:#fff;border:1px solid #e0e7f0;border-radius:12px;padding:16px}
+#voucher4 .v55-fees>details.req-details>summary{color:#295683;font-size:14px;font-weight:750}
+#voucher4 .v55-fees .card,#voucher4 .v55-fees .req-line {box-shadow:none}
+#voucher4 .v55-payments>.field{margin-top:0}
+#voucher4 .v55-payments .req-split {background:#f8fbff;border:1px solid #e0e9f5;padding:13px;border-radius:11px;margin-top:10px;gap:10px}
+#voucher4 .v55-payments #loanOffset38 {margin-top:18px!important;box-shadow:none}
+#voucher4 .v55-side {position:sticky;top:16px;min-width:0;background:#fff;border:1px solid #d3e1f1;border-radius:16px;padding:21px;box-shadow:0 8px 30px #20355f10}
+#voucher4 .v55-side .v55-aside-head{padding-bottom:15px;border-bottom:1px solid #e6edf5;margin-bottom:13px}
+#voucher4 .v55-side .v55-aside-head strong{display:block;color:#18395b;font-size:17px}
+#voucher4 .v55-side .v55-aside-head small{font-size:11px;color:#71839b}
+#voucher4 .v55-side #voucherSummary4{background:transparent;border:0;padding:0;margin:0!important;border-radius:0}
+#voucher4 .v55-side .summary-line{font-size:12px;padding:10px 1px;gap:9px}
+#voucher4 .v55-side .summary-line strong{font-size:13px;color:#203959}
+#voucher4 .v55-side .summary-line.total,#voucher4 .v55-side .v41-net-row{border-top:1px solid #d6e4f2;margin-top:8px;padding-top:17px}
+#voucher4 .v55-side .v41-fee-title{margin-top:15px;color:#234e82;font-weight:800}
+#voucher4 .v55-aside-foot{background:var(--v55-light);border-radius:10px;padding:11px 13px;margin-top:17px;font-size:11px;line-height:1.9;color:#59769d}
+#voucher4 .v55-sale-line-guide{background:#f3faf8;color:#44776e;border:1px solid #d7eee8;border-radius:10px;padding:10px 13px;font-size:11px;line-height:1.9;margin:10px 0 0}
+.work-page.v55-voucher-page .modal-footer{border-radius:0 0 18px 18px;background:#fff;position:sticky;bottom:0;z-index:8;box-shadow:0 -8px 20px #1c345012}
+.work-page.v55-voucher-page .modal-footer .btn{min-height:49px;font-weight:700}
+@media(max-width:1100px){#voucher4 .v55-layout{grid-template-columns:minmax(0,1fr) 280px;gap:15px}#voucher4 .v55-section{padding:17px}#voucher4 .v55-target-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#voucher4 .v55-target-grid .v47-standard{grid-column:1/-1}}
+@media(max-width:880px){#voucher4 .v55-layout{grid-template-columns:1fr}#voucher4 .v55-side{position:static}#voucher4 .v55-intro{padding:16px}#voucher4 .v55-target-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.work-page.v55-voucher-page .page-panel>.modal-body{padding:13px}#voucher4 .v55-intro{flex-direction:column;gap:10px;padding:13px}#voucher4 .v55-main{gap:12px}#voucher4 .v55-section{padding:15px 12px}#voucher4 .v55-section-heading{gap:10px}#voucher4 .v55-section-heading h2{font-size:15px}#voucher4 .v55-target-grid{grid-template-columns:1fr}#voucher4 .v55-target-grid .v47-standard{grid-column:auto}#voucher4 .v55-goods .req-line{padding:13px}#voucher4 .v55-goods .req-line .field-row{grid-template-columns:1fr!important}#voucher4 .v47-purchase-bag{padding:12px}#voucher4 .v55-side{padding:15px}.work-page.v55-voucher-page #modalTitle{font-size:21px}.work-page.v55-voucher-page .modal-footer{position:static}}
+@media print{#voucher4 .v55-side{position:static}.work-page.v55-voucher-page .modal-footer{display:none!important}}

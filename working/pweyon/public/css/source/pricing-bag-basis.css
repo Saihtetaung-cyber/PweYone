@@ -1,0 +1,48 @@
+
+.pricing-bag-basis{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 18px;margin:-2px 0 20px;background:#f5f8fc;border:1px solid var(--line);border-radius:12px;color:var(--muted)}
+.pricing-bag-basis strong{font-size:20px;color:var(--ink)}
+.deduction-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.pricing-sheet{margin-top:3px}.pricing-sheet .summary-line.total{margin-top:12px;padding-top:17px}.pricing-sheet .summary-line.total strong{font-size:29px}
+
+.auto-deduction-box{border:1px solid var(--line);background:#f8fafc;border-radius:13px;padding:18px 20px;display:flex;flex-direction:column;gap:5px;min-height:118px}
+.auto-deduction-box span{font-size:14px;color:var(--muted)}
+.auto-deduction-box strong{font:700 24px Arial,sans-serif;color:var(--ink)}
+.auto-deduction-box small{font-size:12px;color:var(--muted)}
+@media(max-width:760px){.deduction-grid{grid-template-columns:1fr}.pricing-bag-basis{align-items:flex-start;flex-direction:column;gap:5px}}
+
+/* Requested purchase actions: advance first, pricing second. */
+#receiptRows .v2-record.advance-price-row{grid-template-columns:minmax(200px,1fr) 150px 160px 286px}
+#receiptRows .purchase-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#receiptRows .purchase-actions .btn{width:auto;min-width:0;padding-left:10px;padding-right:10px;font-size:13px;white-space:normal}
+.purchase-home-funding{margin-top:16px}
+@media(max-width:1080px){
+ #receiptRows .v2-record.advance-price-row{grid-template-columns:minmax(170px,1fr) 130px 145px 235px;gap:13px}
+ #receiptRows .purchase-actions .btn{font-size:12px;padding-left:7px;padding-right:7px}
+}
+@media(max-width:760px){
+ #receiptRows .v2-record.advance-price-row{grid-template-columns:1fr 125px;gap:12px}
+ #receiptRows .advance-price-row .record-status{grid-column:2;grid-row:1;align-items:flex-end}
+ #receiptRows .advance-price-row .record-weight{grid-column:1;grid-row:2}
+ #receiptRows .advance-price-row .record-button{grid-column:1 / -1;grid-row:3}
+ #receiptRows .purchase-actions .btn{font-size:13px;min-height:46px}
+}
+
+/* Owner report date-range controls. */
+.owner-date-filter{border:1px solid var(--line);background:white;border-radius:15px;padding:18px 20px;margin:0 0 22px}
+.owner-date-filter-top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.owner-date-filter-title strong{display:block;font-size:16px;color:var(--ink)}
+.owner-date-filter-title span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.owner-date-fields{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.owner-date-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}
+.owner-date-fields input{min-height:43px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);font:inherit;font-size:13px}
+.owner-date-fields .btn{min-height:43px;padding:8px 16px}
+.owner-date-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.owner-date-quick button{border:1px solid var(--line);background:#f8fafc;color:var(--muted);border-radius:8px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer}
+.owner-date-quick button.active,.owner-date-quick button:hover{border-color:#bcd0e6;background:var(--light);color:var(--green)}
+.owner-period-title{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:2px 0 10px;color:var(--muted);font-size:13px}
+@media(max-width:600px){
+ .owner-date-filter{padding:16px}
+ .owner-date-fields{display:grid;grid-template-columns:1fr 1fr;width:100%}
+ .owner-date-fields .btn{grid-column:1 / -1;width:100%}
+ .owner-date-fields input{width:100%}
+}

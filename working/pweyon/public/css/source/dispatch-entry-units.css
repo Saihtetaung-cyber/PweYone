@@ -1,0 +1,26 @@
+
+#dispatch4.dispatch-unit-form2{min-width:0;}
+#dispatch4.dispatch-unit-form2>.field:first-child{margin-bottom:18px;}
+#dispatch4.dispatch-unit-form2 .dispatch-stock-info2{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px 30px;padding:16px 18px;border:1px solid #e0e8f3;border-radius:10px;background:#f5f8fc;margin:0 0 22px;}
+.dispatch-stock-info2>div{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.dispatch-stock-info2 span{font-size:12px;line-height:1.9;color:#687b91;}
+.dispatch-stock-info2 strong{font-size:15px;line-height:1.9;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+#dispatch4 .dispatch-method-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start;}
+#dispatch4 .dispatch-method-row2 .field{min-width:0;margin:0;}
+#dispatch4 .dispatch-method-row2 label{display:block;min-height:27px;font-size:13px;line-height:1.9;margin-bottom:8px;}
+#dispatch4 .dispatch-method-row2 select,#dispatch4 .dispatch-method-row2 input{width:100%;min-width:0;height:52px;min-height:52px;font-size:14px;box-sizing:border-box;background:#fff;}
+#dispatch4 .dispatch-method-row2 input{font-size:17px;font-variant-numeric:tabular-nums;}
+#dispatch4 .dispatch-method-row2 .input-suffix{height:52px;}
+#dispatch4 .dispatch-method-row2 .field-help{font-size:12px;line-height:1.9;margin-top:7px;}
+#dispatch4 .dispatch-quantity-slot2{min-width:0;}
+#dispatch4 [hidden]{display:none!important;}
+#dispatch4 .dispatch-equivalent2{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:18px 0 22px;padding:14px 18px;border:1px solid #dce7f7;border-radius:10px;background:#f0f6ff;font-size:13px;line-height:1.9;}
+#dispatch4 .dispatch-equivalent2 strong{color:var(--green);font-size:17px;line-height:1.9;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+#dispatch4 .dispatch-unit-help2,#dispatch4 .dispatch-unit-limit2{font-size:12px;line-height:1.95;padding:12px 15px;margin:0 0 20px;border:1px solid #e0e8f3;border-radius:9px;background:#f8faff;color:#687b91;}
+#dispatch4 .dispatch-unit-limit2{color:#a7443d;border-color:#efccc8;background:#fff5f3;}
+@media(max-width:620px){
+ #dispatch4 .dispatch-method-row2{grid-template-columns:minmax(0,1fr);gap:18px;}
+ #dispatch4.dispatch-unit-form2 .dispatch-stock-info2{padding:14px;gap:12px;}
+ #dispatch4 .dispatch-equivalent2{padding:13px 14px;gap:12px;align-items:flex-start;}
+ #dispatch4 .dispatch-equivalent2 strong{font-size:15px;max-width:48%;}
+}

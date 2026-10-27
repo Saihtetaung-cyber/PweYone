@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "checks": [
+    "Fully paid purchase has paid label and no advance action",
+    "One-cent unpaid balance retains actions",
+    "One unpaid line keeps a mixed voucher unpaid",
+    "Paid residual purchase plus paid supplier settlement hides both actions",
+    "Unpaid supplier side is not masked by a paid residual purchase",
+    "Unconfirmed settlement is not marked paid",
+    "Fully sold supplier receipt with confirmed full settlement is paid",
+    "Paid detail retains printing and removes further settlement actions"
+  ],
+  "errors": []
+}

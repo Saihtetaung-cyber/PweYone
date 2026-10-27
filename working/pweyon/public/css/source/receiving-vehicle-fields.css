@@ -1,0 +1,21 @@
+
+#receive4 .receive-meta-car2{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px;margin-top:16px}
+#receive4 .receive-meta-car2>.field{min-width:0;margin-bottom:0}
+#receive4 .receive-meta-car2 input{width:100%;max-width:100%;box-sizing:border-box}
+#main .receive-footer-car2{display:flex!important;flex-direction:column;gap:14px!important;padding-top:18px!important}
+#main .receive-footer-car2 .receive-action-stack4{display:flex!important;flex-direction:column;gap:14px!important;width:100%;flex-basis:auto!important;order:0!important}
+#main .receive-footer-car2>.btn{order:1;align-self:flex-start;min-height:44px!important;min-width:88px!important;padding:9px 18px!important}
+#main .receive-utilities-car2,#main .receive-submit-car2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
+#main .receive-submit-car2{padding-top:14px;border-top:1px solid #dce6f1}
+#main .receive-footer-car2 .receive-action4{width:100%!important;min-width:0!important;min-height:48px!important;margin:0!important;padding:11px 14px!important;font-size:14px!important;line-height:1.85!important;white-space:normal;overflow-wrap:anywhere;border-radius:9px!important;display:flex;align-items:center;justify-content:center;gap:8px}
+#main .receive-footer-car2 .receive-action4 svg{width:18px;height:18px;flex-shrink:0}
+#main .receive-utilities-car2>.btn{background:#fff!important;color:#526b87!important;border:1px solid #d5e1ef!important;font-weight:500!important}
+#main .receive-submit-car2>#receiveSupplier73{background:#2864ab!important;border:1px solid #2864ab!important;color:#fff!important}
+#main .receive-submit-car2>.receive-price-car2{background:#f0f6ff!important;border:1px solid #afc9ea!important;color:#245f9f!important;font-weight:600!important}
+#main .receive-footer-car2 .receive-action4:hover{filter:brightness(.97)}
+#main .receive-footer-car2 button:focus-visible{outline:3px solid #83b4ec;outline-offset:3px}
+#main .receive-footer-car2 [hidden]{display:none!important}
+#main .receive-single-car2{grid-template-columns:minmax(0,1fr)}
+.receipt-vehicle-car2 strong{overflow-wrap:anywhere}
+@media(max-width:620px){#receive4 .receive-meta-car2{grid-template-columns:minmax(0,1fr);gap:12px}#main .receive-footer-car2 .receive-action4{font-size:13px!important;padding:10px 9px!important;gap:6px}#main .receive-utilities-car2{grid-template-columns:minmax(0,1fr);gap:10px}#main .receive-submit-car2{gap:10px}}
+@media(max-width:370px){#main .receive-submit-car2{grid-template-columns:minmax(0,1fr)}}

@@ -1,0 +1,15 @@
+
+/* V37: partner search in statement, no duplicate Operations tabs on this page. */
+.statement-search-field62{position:relative;min-width:0}
+.statement-search-wrap62{position:relative}
+.statement-search-wrap62>svg{position:absolute;left:15px;top:19px;width:20px;height:20px;color:#7a91a9;pointer-events:none;z-index:1}
+.statement-search-input62{padding-left:46px;padding-right:38px;width:100%;background:#fff}
+.statement-search-results62{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #cbd8e7;border-radius:12px;box-shadow:0 12px 32px #162d4825;max-height:310px;overflow-y:auto;z-index:55;padding:4px}
+.statement-search-results62[hidden]{display:none}
+.statement-search-option62{width:100%;display:flex;align-items:flex-start;flex-direction:column;gap:1px;padding:10px 13px;border:0;background:#fff;color:var(--ink);text-align:left;border-radius:8px;min-height:58px}
+.statement-search-option62 strong{font-size:15px}
+.statement-search-option62 span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.statement-search-option62.focused,.statement-search-option62:hover{background:var(--light)}
+.statement-search-empty62{font-size:13px;color:var(--muted);padding:14px}
+.statement-search-field62 .field-help{margin:6px 0 0;min-height:18px}
+@media(max-width:600px){.statement-search-results62{max-height:230px}}

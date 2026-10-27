@@ -1,0 +1,38 @@
+
+#main .dispatch-history2{padding:22px 0 0;border:0;border-top:1px solid #e1e8f2;border-radius:0;background:transparent;}
+#main .dispatch-history2.dh2-standalone{padding:0;border:0;}
+#main .dh2-product-head{align-items:center;gap:16px;margin-bottom:12px;}
+#main .dh2-product-head>div{min-width:0;}
+#main .dh2-product-head h3{font-size:16px;line-height:1.9;margin:0 0 3px;}
+#main .dh2-product-head>div>span,#main .dh2-record-count{color:#687b91;font-size:12px;line-height:1.9;}
+#main .dh2-summary-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 24px;font-size:12px;line-height:1.95;color:#687b91;margin-bottom:18px;}
+#main .dh2-summary-line>span{min-width:0;}
+#main .dh2-summary-line strong{color:var(--ink);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;margin-left:5px;}
+#main .dh2-table-scroll{width:100%;max-width:100%;overflow-x:auto;border:1px solid #dfe7f1;border-radius:12px;scrollbar-width:thin;scrollbar-color:#b4c8e1 #f2f6fb;}
+#main .dh2-table-scroll:focus-visible{outline:3px solid #a5c7f5;outline-offset:2px;}
+#main .dh2-history-table{width:100%;min-width:920px;border-collapse:collapse;font-family:inherit;table-layout:fixed;background:#fff;}
+#main .dh2-history-table th{font-size:12px;font-weight:500;line-height:1.95;padding:16px;background:#f4f7fb;color:#61758f;border-bottom:1px solid #dfe7f1;text-align:left;vertical-align:middle;}
+#main .dh2-history-table th:first-child{width:27%;}
+#main .dh2-history-table th:nth-child(2){width:19%;}
+#main .dh2-history-table th:nth-child(n+3){width:18%;}
+#main .dh2-history-table th.dh2-number-heading{text-align:right;}
+#main .dh2-history-table td{padding:17px 16px;font-size:13px;line-height:1.95;vertical-align:top;border-bottom:1px solid #e2eaf4;background:transparent;overflow-wrap:anywhere;}
+#main .dh2-history-table tbody tr:nth-child(even){background:#f7faff;}
+#main .dh2-history-table tbody tr:nth-child(odd){background:#fff;}
+#main .dh2-history-table tbody tr:hover{background:#eff5fe;}
+#main .dh2-history-table tbody tr:last-child td{border-bottom:0;}
+#main .dh2-row-title{display:block;font-size:13px;font-weight:600;line-height:1.9;color:var(--ink);}
+#main .dh2-row-date{font-size:12px;line-height:1.95;margin-top:5px;color:#6b7f99;}
+#main .dh2-recorded-line{display:block;margin-top:3px;}
+#main .dh2-source-cell>strong{display:block;font-size:13px;font-weight:500;color:var(--ink);}
+#main .dh2-source-cell>span{display:block;color:#6b7f99;font-size:12px;margin-top:4px;line-height:1.95;}
+#main .dh2-quantity-cell{text-align:right;font-variant-numeric:tabular-nums;}
+#main .dh2-quantity-cell>strong{display:block;color:var(--ink);font-family:inherit;font-size:14px;line-height:1.95;font-weight:600;}
+#main .dh2-quantity-cell.dh2-issued-cell>strong{color:var(--green);}
+#main .dh2-row-bags{display:block;margin-top:4px;font-size:12px;line-height:1.95;color:#6b7f99;}
+#main .dh2-row-lot-balance{display:block;margin-top:7px;font-size:11px;line-height:1.95;color:#6b7f99;}
+#main .dh2-history-table .dh2-table-empty{text-align:center;padding:26px 16px;color:#6b7f99;}
+#main .dh2-mobile-scroll-hint{display:none;}
+#main .dh2-product+.dh2-product{padding-top:22px;margin-top:24px;}
+@media(max-width:1000px){#main .dh2-mobile-scroll-hint{display:block;font-size:11px;line-height:1.9;color:#6b7f99;margin-top:9px;}}
+@media(max-width:620px){#main .dispatch-history2{padding:18px 0 0;}#main .dispatch-history2.dh2-standalone{padding:0;}#main .dh2-summary-line{gap:6px 15px;}#main .dh2-history-table{min-width:900px;}#main .dh2-product-head{gap:10px;}}

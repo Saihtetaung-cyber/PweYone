@@ -1,0 +1,64 @@
+
+/* V5.4 — True horizontal labor master layout: two panels fit side-by-side without inner horizontal scrolling. */
+.labor-master-grid-51{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:18px!important;
+  align-items:start!important;
+  overflow:visible!important;
+  padding-bottom:0!important;
+}
+.labor-master-grid-51>.card{
+  flex:none!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  margin:0!important;
+  overflow:hidden;
+}
+.labor-master-grid-51 .card-title{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  flex-wrap:nowrap!important;
+}
+.labor-master-grid-51 .card-title>div:first-child{min-width:0!important;flex:1 1 auto!important}
+.labor-master-grid-51 .card-title>.btn{flex:0 0 auto!important}
+.labor-master-grid-51 .table-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:visible!important;
+}
+.labor-master-grid-51 table{
+  width:100%!important;
+  min-width:0!important;
+  table-layout:auto!important;
+}
+.labor-master-grid-51 th,
+.labor-master-grid-51 td{
+  white-space:normal!important;
+  word-break:keep-all;
+  padding-left:11px!important;
+  padding-right:11px!important;
+  vertical-align:middle!important;
+}
+.labor-master-grid-51 td:last-child,
+.labor-master-grid-51 th:last-child{white-space:nowrap!important}
+.labor-master-grid-51 td .row.wrap{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+}
+.labor-master-grid-51 .btn-sm{padding-left:10px!important;padding-right:10px!important}
+
+/* Keep the two setup panels horizontal on desktop/tablet. Only very narrow phones may scroll the whole pair. */
+@media(max-width:760px){
+  .labor-master-grid-51{
+    grid-template-columns:minmax(520px,1fr) minmax(520px,1fr)!important;
+    overflow-x:auto!important;
+    padding-bottom:8px!important;
+  }
+}

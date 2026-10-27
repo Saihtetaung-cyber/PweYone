@@ -1,0 +1,7 @@
+
+/* V57 - in-scope purchase/sale deduction clarity; existing page layout and flow remain. */
+.v57-recovery-note{border:1px solid #cdddf1;background:#f3f8ff;color:#234d78;border-radius:13px;padding:14px 17px;margin:14px 0;font-size:14px;line-height:1.9}
+.v57-recovery-note strong{display:block;font-size:15px}
+.v57-invalid{background:#fff2ee!important;border-color:#cc6555!important}
+#v57DeductionWarning{border:1px solid #e4afa7;background:#fff3f0;color:#a13d32;border-radius:12px;padding:12px 15px;margin:12px 0;font-size:14px;line-height:1.85}
+#v57DeductionWarning:empty{display:none}

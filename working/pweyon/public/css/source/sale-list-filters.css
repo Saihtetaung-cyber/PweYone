@@ -1,0 +1,11 @@
+
+#main .sale-tabs-toolbar2{display:block;margin-bottom:16px}#main .sale-tabs-toolbar2 .tabs{display:inline-flex;width:auto;max-width:100%;flex-wrap:wrap}
+#main .sale-search-controls2{display:grid;grid-template-columns:minmax(220px,1fr) minmax(155px,200px) minmax(155px,200px) auto;gap:16px;align-items:end;margin:0 0 24px;min-width:0}
+#main .sale-search-controls2 label{display:block;color:#52677f;font-size:13px;line-height:1.9;margin:0;font-weight:500;min-width:0}
+#main .sale-text-filter2>label{margin-bottom:7px}#main .sale-search-controls2 .search{min-width:0;max-width:none;width:100%;margin:0}
+#main .sale-search-controls2 input{box-sizing:border-box;width:100%;min-width:0;height:48px;min-height:48px;background:#fff;border:1px solid #cddbed;border-radius:9px;font-family:inherit;font-size:14px;color:#24354b}
+#main .sale-search-controls2 label>input{display:block;margin-top:7px;padding:8px 12px}#main .sale-clear2{min-height:48px;white-space:nowrap;font-size:13px}
+#main .sale-search-controls2 .search input{padding-left:42px}
+#main .sale-date-error2{color:#a7443d;font-size:13px;line-height:1.9;margin:-12px 0 20px}#main .sale-date-error2[hidden]{display:none!important}
+@media(max-width:1000px){#main .sale-search-controls2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#main .sale-text-filter2{grid-column:1 / -1}#main .sale-clear2{grid-column:1 / -1;justify-self:end}}
+@media(max-width:520px){#main .sale-search-controls2{gap:12px}#main .sale-search-controls2 input{font-size:13px}#main .sale-clear2{justify-self:stretch}#main .sale-tabs-toolbar2 .tabs{gap:6px}}

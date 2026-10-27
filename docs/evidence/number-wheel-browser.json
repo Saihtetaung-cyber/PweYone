@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "results": [
+    "1440px: receiving amount is unchanged by actual wheel-up/down events and remains manually editable",
+    "1440px: dynamically opened service-rate dialog retains decimal percentage after wheel scrolling",
+    "390px: receiving amount is unchanged by actual wheel-up/down events and remains manually editable",
+    "390px: dynamically opened service-rate dialog retains decimal percentage after wheel scrolling",
+    "Wheel scrolling over a focused numeric field still scrolls its enclosing panel and does not change the number"
+  ],
+  "errors": []
+}

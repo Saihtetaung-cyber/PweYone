@@ -1,0 +1,4 @@
+
+.opening-pending2{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px;border:1px solid #ead9af;border-radius:12px;background:#fffaf0}
+.opening-pending2 strong{font-size:14px;color:#725425}.opening-pending2 p{font-size:12px;color:#7b6b50;margin:5px 0 0}.opening-pending2 .btn{flex-shrink:0}.opening-pending2 .pill{margin-left:6px}
+@media(max-width:600px){.opening-pending2{align-items:flex-start;flex-direction:column;padding:15px}.opening-pending2 .btn{width:100%}}
