@@ -1149,12 +1149,12 @@
   "applicationEnvironmentUnchanged": true,
   "database": "MariaDB / 127.0.0.1:3306 / pweyon",
   "validation": {
-    "protectedActiveFilesUnchanged": 185,
-    "approvedChangedActiveFiles": 21,
-    "addedRuntimeFiles": 14,
+    "protectedActiveFilesUnchanged": 178,
+    "approvedChangedActiveFiles": 28,
+    "addedRuntimeFiles": 25,
     "originalReferencesUnchanged": 3,
-    "linkedAssetsPresent": 177,
-    "listedFileAndFolderEntries": 422,
+    "linkedAssetsPresent": 181,
+    "listedFileAndFolderEntries": 443,
     "archivedSqlBackupHashMatches": true,
     "phpunit": {
       "tests": 49,
@@ -1185,9 +1185,9 @@
   "currentFileRevisions": {
     "working/pweyon/app/Domain/BusinessService.php": {
       "originalSha256": "b56af08d901b41280536590f35b5e43493c883feb3884cb4a7388a427869e07f",
-      "sha256": "843ad5ac5be2adc49facf0fa38b538a9674635314bff7076653e01e69ef5e180",
-      "date": "2026-10-27",
-      "reason": "Complete packaging history projection and preserve immutable packaging-time descriptions and quantities.",
+      "sha256": "ad915f18039ce67d7e7cd3f18ac1e4aecd77f0b72a7bb2cce3ae27c71e26707e",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval.",
       "previousRevisions": [
         {
           "originalSha256": "b56af08d901b41280536590f35b5e43493c883feb3884cb4a7388a427869e07f",
@@ -1230,6 +1230,30 @@
           "sha256": "56ee0ac5f36d1eec553eddfe3efe645e775044966f2dc67a860bfed9de007073",
           "date": "2026-10-26",
           "reason": "Purchase failed because the UI recreated a missing one-mael record with a synthetic ID. Keep only persisted active labor masters and provide explicit validation for missing/inactive selections."
+        },
+        {
+          "originalSha256": "b56af08d901b41280536590f35b5e43493c883feb3884cb4a7388a427869e07f",
+          "sha256": "843ad5ac5be2adc49facf0fa38b538a9674635314bff7076653e01e69ef5e180",
+          "date": "2026-10-27",
+          "reason": "Complete packaging history projection and preserve immutable packaging-time descriptions and quantities."
+        },
+        {
+          "originalSha256": "b56af08d901b41280536590f35b5e43493c883feb3884cb4a7388a427869e07f",
+          "sha256": "0217af40f758eeb60615b907c1235cad10cd6a662024635fb31c68ee1c900afe",
+          "date": "2026-10-27",
+          "reason": "Allow explicit zero-percent loan policies, policy-based and legacy-rate loans, and opening loans; keep missing/negative rates invalid and existing loan snapshots unchanged."
+        },
+        {
+          "originalSha256": "b56af08d901b41280536590f35b5e43493c883feb3884cb4a7388a427869e07f",
+          "sha256": "3f186f24eb01f555722a9d76d2e737a1179d52174b1acd27d12a6e58df5aea23",
+          "date": "2026-10-28",
+          "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
+        },
+        {
+          "originalSha256": "b56af08d901b41280536590f35b5e43493c883feb3884cb4a7388a427869e07f",
+          "sha256": "3f33b9cb42cd19a84c26b1488d92f888306e2eef016ea9aee7213d2d783aebfe",
+          "date": "2026-10-28",
+          "reason": "Allow receipt.edit to keep or select closed historical dates while preserving other posting-date guards and calendar validity; retain identity, dependent-stock locks and replay semantics."
         }
       ]
     },
@@ -1275,9 +1299,9 @@
     },
     "working/pweyon/routes/web.php": {
       "originalSha256": "c1700ec6a2192f63d17337ff7b8eed5dc1ab1d9616d2b78662f1a5a92eea8a79",
-      "sha256": "f0627d361475a0985eddb5b69cf9de072d7118132742b30b2e368da7cb334a6a",
-      "date": "2026-10-26",
-      "reason": "User requested separate login and owner-password forms; one password input without current password or confirmation.",
+      "sha256": "fc7458296b642e82f2a382edf76c69c3707fa21f9ae00bcb3d97707c9f78f362",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval.",
       "previousRevisions": [
         {
           "originalSha256": "c1700ec6a2192f63d17337ff7b8eed5dc1ab1d9616d2b78662f1a5a92eea8a79",
@@ -1290,14 +1314,20 @@
           "sha256": "37cc5a58f76531056e3e027c7b82b986faf6cd2d35c48fb500da67cc33d32b9a",
           "date": "2026-10-26",
           "reason": "User requested owner-only account email/login password settings and independently changeable owner workspace password."
+        },
+        {
+          "originalSha256": "c1700ec6a2192f63d17337ff7b8eed5dc1ab1d9616d2b78662f1a5a92eea8a79",
+          "sha256": "f0627d361475a0985eddb5b69cf9de072d7118132742b30b2e368da7cb334a6a",
+          "date": "2026-10-26",
+          "reason": "User requested separate login and owner-password forms; one password input without current password or confirmation."
         }
       ]
     },
     "working/pweyon/public/js/server-bridge.js": {
       "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
-      "sha256": "67a63c55503ea16f3ab3c84512c24696368c3db9d906c8a17c4dc1d2d00bd19d",
-      "date": "2026-10-27",
-      "reason": "Prevent native mouse-wheel stepping on focused numeric inputs across static and dynamic forms, retaining native scroll and keyboard entry.",
+      "sha256": "0e64492d53abe6843708f8935206b9ef2067a61b898a29bbfd4af3857606d130",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval.",
       "previousRevisions": [
         {
           "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
@@ -1406,6 +1436,36 @@
           "sha256": "3934fb6f2567666f3803b289b55b87b56d2a84d156b36e3e72619d9dd6791321",
           "date": "2026-10-26",
           "reason": "Autofill market quotes only in selected standard-bag pricing; preserve pricing basis selection and independent editable bag/per-viss drafts."
+        },
+        {
+          "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
+          "sha256": "67a63c55503ea16f3ab3c84512c24696368c3db9d906c8a17c4dc1d2d00bd19d",
+          "date": "2026-10-27",
+          "reason": "Prevent native mouse-wheel stepping on focused numeric inputs across static and dynamic forms, retaining native scroll and keyboard entry."
+        },
+        {
+          "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
+          "sha256": "88d8d337f0562787d9525433de25469ee7387e69731864614a1aa5d8e748b58d",
+          "date": "2026-10-27",
+          "reason": "Autofill editable purchase advance recovery from this supplier remaining unallocated balance, with range limits and nonnegative recovery validation."
+        },
+        {
+          "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
+          "sha256": "560567124b951bacaa4ef229027f3398a1150892a67b061cc9a7d59450f90c4b",
+          "date": "2026-10-27",
+          "reason": "Editable purchase carriage recovery initialized from linked receipt outlays, partial balances and exact cents; explicit source-document link supports multi-line and historical receipt views."
+        },
+        {
+          "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
+          "sha256": "d11fa4d66fb8f0aad6f26fe0971f023bda1396792ae9f24a53d2c9b39fb69b6c",
+          "date": "2026-10-27",
+          "reason": "Place the editable carriage recovery block directly below the supplier advance-recovery field, spanning a full row."
+        },
+        {
+          "originalSha256": "7a9596d3954592ab3ebe7119fd29d0cb330838e4d749f89004dff660073d9cb8",
+          "sha256": "da3988a9d44bfec645d1a269fa8f0dafdd0454497ffb73ad619c2a2db247f48a",
+          "date": "2026-10-27",
+          "reason": "Add existing account/users and lock SVG icons to the two owner-only account/password navigation buttons."
         }
       ]
     },
@@ -1432,16 +1492,23 @@
     },
     "working/pweyon/resources/views/auth/login.blade.php": {
       "originalSha256": "b192cc21998401a71d27583e623b74addfa81bfd841ebb99874c9e1b8e84fb6b",
-      "sha256": "1241230aae76cccb540300cc59fa5db8bd4743b63e7d728aa7fa2fc7caac4e91",
-      "date": "2026-10-26",
-      "reason": "User requested login layout matching the supplied blue split-screen reference, with responsive mobile layout and existing login form retained.",
-      "previousRevisions": []
+      "sha256": "386efc07ccf53df1bffab3808e23a7d872cf75fcc70007a3fda2f0023f8aa379",
+      "date": "2026-10-27",
+      "reason": "Add requested Product Owner and Developer credits at the bottom of the login introduction panel.",
+      "previousRevisions": [
+        {
+          "originalSha256": "b192cc21998401a71d27583e623b74addfa81bfd841ebb99874c9e1b8e84fb6b",
+          "sha256": "1241230aae76cccb540300cc59fa5db8bd4743b63e7d728aa7fa2fc7caac4e91",
+          "date": "2026-10-26",
+          "reason": "User requested login layout matching the supplied blue split-screen reference, with responsive mobile layout and existing login form retained."
+        }
+      ]
     },
     "working/pweyon/resources/views/workspace.blade.php": {
       "originalSha256": "1e6f7eac3dab0e3e91b7865e56d96a4e6175e05bb54073f77e151efb173ddecb",
-      "sha256": "3c608049b8b6b9717e89f2ffd5dc463710ca32445364e362e3c0a3c1484a64f7",
-      "date": "2026-10-26",
-      "reason": "Newest-first rendered record lists and client-side pagination at 30 records, with filters, intact canonical arrays, print exclusion and stock-ledger page size alignment.",
+      "sha256": "3a66e12f26497bf056bd8cf28826178609d9023647ba7142c6a02800d847fb43",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval.",
       "previousRevisions": [
         {
           "originalSha256": "1e6f7eac3dab0e3e91b7865e56d96a4e6175e05bb54073f77e151efb173ddecb",
@@ -1478,6 +1545,24 @@
           "sha256": "edf05c836c6a13ba583790065327d0427abb51a9f8fa8dfea1bcd429c0ecef98",
           "date": "2026-10-26",
           "reason": "User-requested owner loan interest policy CRUD, configured rate selection and immutable posted loan snapshots."
+        },
+        {
+          "originalSha256": "1e6f7eac3dab0e3e91b7865e56d96a4e6175e05bb54073f77e151efb173ddecb",
+          "sha256": "3c608049b8b6b9717e89f2ffd5dc463710ca32445364e362e3c0a3c1484a64f7",
+          "date": "2026-10-26",
+          "reason": "Newest-first rendered record lists and client-side pagination at 30 records, with filters, intact canonical arrays, print exclusion and stock-ledger page size alignment."
+        },
+        {
+          "originalSha256": "1e6f7eac3dab0e3e91b7865e56d96a4e6175e05bb54073f77e151efb173ddecb",
+          "sha256": "2d4fc60956543e934e0145f603c081b901316a33237fe0dd6143492c466fd7d9",
+          "date": "2026-10-27",
+          "reason": "Load the shared currency-input thousands formatter after runtime features; existing numeric readers receive unformatted decimals."
+        },
+        {
+          "originalSha256": "1e6f7eac3dab0e3e91b7865e56d96a4e6175e05bb54073f77e151efb173ddecb",
+          "sha256": "9ce4f2e8c90c498e4a1185d66913a6f1a4ba2ce59ca1f057f0e0e7883e17a31e",
+          "date": "2026-10-28",
+          "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
         }
       ]
     },
@@ -1511,9 +1596,9 @@
     },
     "working/pweyon/app/Domain/Projection.php": {
       "originalSha256": "10f5d72b4fd36fc02ab4aea1a45734d1b5b0ed5d13e8dcf2b16613bf2179f98c",
-      "sha256": "61d4ccd03423d052694f1acd888d516971280635d3323a19749aa075ed9706ce",
-      "date": "2026-10-27",
-      "reason": "Complete packaging history projection and preserve immutable packaging-time descriptions and quantities.",
+      "sha256": "03122cfe88bf2d11cea9347980a73e8a167221ef491191793f5e1ee227099abd",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval.",
       "previousRevisions": [
         {
           "originalSha256": "10f5d72b4fd36fc02ab4aea1a45734d1b5b0ed5d13e8dcf2b16613bf2179f98c",
@@ -1538,6 +1623,24 @@
           "sha256": "e2aaf83e2647f867f2d2351eeeb8dda9f7364a45684d5fa47f6fae5afa548559",
           "date": "2026-10-26",
           "reason": "User requested system-generated readonly receipt numbers; allocate under the workspace lock and preserve existing numbers on edit."
+        },
+        {
+          "originalSha256": "10f5d72b4fd36fc02ab4aea1a45734d1b5b0ed5d13e8dcf2b16613bf2179f98c",
+          "sha256": "61d4ccd03423d052694f1acd888d516971280635d3323a19749aa075ed9706ce",
+          "date": "2026-10-27",
+          "reason": "Complete packaging history projection and preserve immutable packaging-time descriptions and quantities."
+        },
+        {
+          "originalSha256": "10f5d72b4fd36fc02ab4aea1a45734d1b5b0ed5d13e8dcf2b16613bf2179f98c",
+          "sha256": "342df108b2710fa95eea137b63a22e35a7be07152db8d479eee3200c52d71a9c",
+          "date": "2026-10-27",
+          "reason": "Editable purchase carriage recovery initialized from linked receipt outlays, partial balances and exact cents; explicit source-document link supports multi-line and historical receipt views."
+        },
+        {
+          "originalSha256": "10f5d72b4fd36fc02ab4aea1a45734d1b5b0ed5d13e8dcf2b16613bf2179f98c",
+          "sha256": "b0047ce1b0f5d7af9d3aec9b76256812509dc6456c4611198b84b748274f13f1",
+          "date": "2026-10-28",
+          "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
         }
       ]
     },
@@ -1589,6 +1692,49 @@
       "date": "2026-10-27",
       "reason": "Initialize missing workspace setup automatically after migrations/seeding with selected-connection support; skip initialized workspaces and dry runs.",
       "previousRevisions": []
+    },
+    "working/pweyon/public/js/loan-interest-policies.js": {
+      "originalSha256": "99b8d7b2e34fac4655bdba1dcbe9448afc5fe00204226b9f99188af68e035ca5",
+      "sha256": "b81683d4fea81fa41f4cb1b86fc722c83aa793311eeaaf9412b33d676c798780",
+      "date": "2026-10-27",
+      "reason": "Allow explicit zero-percent loan policies, policy-based and legacy-rate loans, and opening loans; keep missing/negative rates invalid and existing loan snapshots unchanged.",
+      "previousRevisions": []
+    },
+    "working/pweyon/public/js/source/cash-workspace-layout.js": {
+      "originalSha256": "bc0df4289031f48d5381153755eca60c7c4906326984cb034d59b4ee2ab1d314",
+      "sha256": "fc198d754e582fe3a3e93902cd57c818a4aa79c2bc94e2658541e1a9fa619dac",
+      "date": "2026-10-28",
+      "reason": "Hide cash-page opening discrepancy warning after linked or recount resolution; retain pending/reviewed warnings and show invalidated evidence again."
+    },
+    "working/pweyon/public/js/source/workspace-core.js": {
+      "originalSha256": "7293b31dadb8783a2b0f62360b4b404681ffd483541554872451dd3e2e93f919",
+      "sha256": "fb4a359a6a3ec7ddbe3405b8eb95cb2090128c2e614ddb5f0fff0ac3e121e948",
+      "date": "2026-10-28",
+      "reason": "User-requested removal of prototype footers, help links and home reset action; business data unchanged."
+    },
+    "working/pweyon/public/js/source/workspace-pages.js": {
+      "originalSha256": "b82c44d6dfb3d747a3473a87848270f61a1262fdf0e8403b7033ed1ccfaf15ed",
+      "sha256": "32100589ff1fab06fae77de3c9f4829a45c3c849ac33eab0948e9e80aa59c76d",
+      "date": "2026-10-28",
+      "reason": "User-requested removal of prototype footers, help links and home reset action; business data unchanged."
+    },
+    "working/pweyon/public/js/source/master-data-settings.js": {
+      "originalSha256": "322892f7d875506d71dc021e6831ea42c624dae654295ffe34f3ebe5b863ea6a",
+      "sha256": "e08bb1356928df4d28c3c49a79098eb3ee4c13ce33b32a570598d3a5fe7f9f94",
+      "date": "2026-10-28",
+      "reason": "User-requested removal of prototype footers, help links and home reset action; business data unchanged."
+    },
+    "working/pweyon/public/js/source/receiving-and-supplier-forms.js": {
+      "originalSha256": "15c4c089a208384a180d509f2f3040fcca95b53ea237055c7c3a1d0f208b2d7d",
+      "sha256": "138710c174c344391fb447fc25974e16e7aeae7faa2c3990926c9ec0130d21cc",
+      "date": "2026-10-28",
+      "reason": "User-requested removal of prototype footers, help links and home reset action; business data unchanged."
+    },
+    "working/pweyon/public/js/source/workspace-clean-start-guide.js": {
+      "originalSha256": "c43ba54c7f6835f2710e2952f7df23751b11c283e33a1960414bfda11f246f57",
+      "sha256": "3e2907625317b0ce53ff736d3474f40d7edba6c09bbe2e5d6c95119b5c4a176a",
+      "date": "2026-10-28",
+      "reason": "User-requested removal of prototype footers, help links and home reset action; business data unchanged."
     }
   },
   "addedRuntimeFiles": [
@@ -1675,6 +1821,72 @@
       "sha256": "2787cd9f5a7b9c4b8dede2ae0c4ba8cf2b4cf4b3e44449a8f9449b1bfd3b1656",
       "date": "2026-10-27",
       "reason": "Control automatic workspace initialization, disabled by default for testing/browser environments."
+    },
+    {
+      "path": "working/pweyon/public/js/money-input-format.js",
+      "sha256": "63586ca4f8c6324113646bc4762c96627943cad3ece50c14051840d91f71b3a6",
+      "date": "2026-10-27",
+      "reason": "Group financial amounts visually while preserving canonical decimal reads, constraints, dynamic forms, caret and form serialization."
+    },
+    {
+      "path": "working/pweyon/app/Domain/OpeningCashReview.php",
+      "sha256": "68241e1f3e9d6e5ca547937c7897a6e4486361c58bebfac555f0a598ebf2baf6",
+      "date": "2026-10-28",
+      "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
+    },
+    {
+      "path": "working/pweyon/database/migrations/2026_10_28_135748_add_opening_review_to_business_days_table.php",
+      "sha256": "4dd318f325ba935abe973221a98e32fd0d17980dc979d38a6a5516c71e835549",
+      "date": "2026-10-28",
+      "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
+    },
+    {
+      "path": "working/pweyon/public/js/opening-cash-flow.js",
+      "sha256": "103b0921421155313ecae42815a2e8bb36d81794cdb6917f476bfe22ada56c11",
+      "date": "2026-10-28",
+      "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
+    },
+    {
+      "path": "working/pweyon/public/css/opening-cash-flow.css",
+      "sha256": "06e77ef9837ee943d5e1cb2675b6257554f3deaaa6387f8843ad2a4179cee208",
+      "date": "2026-10-28",
+      "reason": "User-authorized Opening Cash Flow Detail Updated (Update 2): persistent owner review, immutable original count, exact evidence-link/recount resolution, historical records and invalidated-link recovery without cash reposting."
+    },
+    {
+      "path": "working/pweyon/app/Domain/OpeningWorkbook.php",
+      "sha256": "0fe5348e59516c72558c5e13accf351a10b5d4a0c0a02ecdb62464b367420bba",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval."
+    },
+    {
+      "path": "working/pweyon/app/Domain/OpeningImport.php",
+      "sha256": "99e40211de338a3451920e78e357798d96cbd2881abad4970398c50e28b16fdf",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval."
+    },
+    {
+      "path": "working/pweyon/app/Http/Controllers/OpeningImportController.php",
+      "sha256": "f8282e9019f3930774a2bd1909c966e09a80dc3765f056a7afcdd9d85789c325",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval."
+    },
+    {
+      "path": "working/pweyon/public/js/opening-excel-import.js",
+      "sha256": "9cab09db1ed3dc9c6a45c23b1187f23990b0a53792765cf990b85fe7ad59a5f0",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval."
+    },
+    {
+      "path": "working/pweyon/resources/templates/opening-import.xlsx",
+      "sha256": "023e2afb3bae30ea65c004356b85732e0abd0ae20c2bd348a2ca785acd983f57",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval."
+    },
+    {
+      "path": "working/pweyon/README.md",
+      "sha256": "4447719123e0c5f7f28df931144598dff3b716a4b69c2ef1c9cabf6b6e4707ac",
+      "date": "2026-10-28",
+      "reason": "Opening Excel template download and validated preview/import into the existing draft: signed stale-safe token, actor/account/loan authorization, duplicate-stock protection, original bag-cost/origin/note preservation, and existing owner approval."
     }
   ],
   "runtimeRenames": [
@@ -2847,5 +3059,60 @@
       "date": "2026-10-26",
       "reason": "User requested feature names for the remaining numbered CSS files."
     }
-  ]
+  ],
+  "openingCashFlowUpdate": {
+    "sourceDocument": "reference/originals/PweYon_Version_2_Opening_Cash_Flow_Detail_Updated.docx",
+    "sourceSha256": "6669678e0dd1a884c04feac9cd40b1754fad8eb43e9eb3f5296c78704a18c52f",
+    "sourceVersion": "27 October 2026 Update 2",
+    "runtimeSourceIdentity": "1f4cc8a6ab01475644dd72d210ace35743e8523a207d110b5c610731f122e176",
+    "runtimeFiles": [
+      "working/pweyon/app/Domain/BusinessService.php",
+      "working/pweyon/app/Domain/Projection.php",
+      "working/pweyon/resources/views/workspace.blade.php",
+      "working/pweyon/app/Domain/OpeningCashReview.php",
+      "working/pweyon/database/migrations/2026_10_28_135748_add_opening_review_to_business_days_table.php",
+      "working/pweyon/public/js/opening-cash-flow.js",
+      "working/pweyon/public/css/opening-cash-flow.css"
+    ],
+    "baseCommit": "32b7096ffced7fc4af7ab28361d6121023d7e787",
+    "branch": "main",
+    "gitStatus": "Uncommitted authorized local changes; no push",
+    "migration": "2026_10_28_135748_add_opening_review_to_business_days_table",
+    "schemaStatus": "Forward migration applied to pweyon and pweyon_test",
+    "acceptance": "Not claimed",
+    "driveSync": "DRIVE_SYNC_PENDING; no external destination authorized",
+    "sourcePackage": "NOT_DUE - routine update"
+  },
+  "openingExcelImport": {
+    "source": "reference/originals/PweYon_Version_2_Opening_Import_Template (1).xlsx",
+    "sourceSha256": "023e2afb3bae30ea65c004356b85732e0abd0ae20c2bd348a2ca785acd983f57",
+    "sourceIdentity": "179642be714d99f2d9d9dcc50ac35abcc82fe7417e135b7a8680159b886718b0",
+    "runtimeFiles": [
+      "working/pweyon/app/Domain/OpeningWorkbook.php",
+      "working/pweyon/app/Domain/OpeningImport.php",
+      "working/pweyon/app/Http/Controllers/OpeningImportController.php",
+      "working/pweyon/app/Domain/BusinessService.php",
+      "working/pweyon/app/Domain/Projection.php",
+      "working/pweyon/routes/web.php",
+      "working/pweyon/public/js/server-bridge.js",
+      "working/pweyon/public/js/opening-excel-import.js",
+      "working/pweyon/resources/views/workspace.blade.php",
+      "working/pweyon/resources/templates/opening-import.xlsx",
+      "working/pweyon/README.md"
+    ],
+    "verificationFiles": [
+      "working/pweyon/tests/Feature/BusinessFlowsTest.php",
+      "development/tools/build-interface.cjs",
+      "development/tools/opening-import-fixture.php",
+      "development/tools/test-opening-excel-import-browser.cjs"
+    ],
+    "baseCommit": "32b7096ffced7fc4af7ab28361d6121023d7e787",
+    "branch": "main",
+    "gitStatus": "Uncommitted local changes; no commit/push",
+    "schema": "No migration; draft/import history uses documents.details; opening provenance uses stock_events.details",
+    "dependencies": "Installed PHP Phar/DOM/zlib only; no new packages",
+    "sourcePackage": "NOT_DUE - routine authorized update",
+    "driveSync": "DRIVE_SYNC_PENDING - no authorized register configured",
+    "humanAcceptance": "Not claimed"
+  }
 }

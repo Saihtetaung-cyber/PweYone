@@ -17,7 +17,7 @@
   dialog.setAttribute('aria-label','ကြိုထုတ်ငွေ အတိုးမူဝါဒ');
   dialog.innerHTML='<h3>'+(id?'အတိုးမူဝါဒ ပြင်မယ်':'အတိုးမူဝါဒ အသစ်ထည့်မယ်')+'</h3><div id="modalError" class="form-error" role="alert"></div><form id="loanPolicyForm" onsubmit="event.preventDefault();pweSaveLoanPolicy()"><div class="deduction-editor-horizontal">'+
    field('မူဝါဒအမည်','loanPolicyName',{value:policy?.name||'',required:true})+
-   field('လစဉ် အတိုးနှုန်း (%)','loanPolicyRate',{value:policy?.monthlyRate??'',type:'number',min:'0.00000001',max:100,step:'any',required:true})+
+   field('လစဉ် အတိုးနှုန်း (%)','loanPolicyRate',{value:policy?.monthlyRate??'',type:'number',min:0,max:100,step:'any',required:true})+
    selectField('အခြေအနေ','loanPolicyActive',[['yes','အသုံးပြုနေ'],['no','ပိတ်ထား']],policy?.active===false?'no':'yes')+'</div><p class="field-help">'+formula+'</p></form><div class="deduction-editor-actions">'+btn('မသိမ်းတော့ပါ','pweCloseLoanPolicy()','secondary')+btn('သိမ်းမယ်','pweSaveLoanPolicy()','primary','check')+'</div>';
   dialog.addEventListener('cancel',event=>{event.preventDefault();pweCloseLoanPolicy();});$('main').append(dialog);dialog.showModal();$('loanPolicyName').focus();
  };
@@ -40,7 +40,7 @@
  };
  const baseSaveLoan=saveLoan38;
  saveLoan38=function(){if(!$('loanForm38')?.reportValidity())return false;return baseSaveLoan();};
- window.openingLoanRateValid=value=>Number.isFinite(Number(value))&&Number(value)>0&&Number(value)<=100;
+ window.openingLoanRateValid=value=>value!==null&&value!==undefined&&String(value).trim()!==''&&Number.isFinite(Number(value))&&Number(value)>=0&&Number(value)<=100;
  function openingPolicyChoices(){
   const select=$('op69LoanRate');if(!select)return;
   const previous=select.value,rates=[...new Set(policies().filter(p=>p.active).map(p=>String(Number(p.monthlyRate))))];

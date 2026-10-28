@@ -67,7 +67,7 @@ render=function(){
  const views={home:homePage,receipts:receiptsPage,sales:salesPage,inventory:inventoryPage,cash:cashPage,prices:pricesPage,owner:ownerPage,profit:profitPage,records:recordsPage,tasks:tasksPage};
  const content=(views[page]||homePage)();
  document.getElementById('main').innerHTML=content+
- `<footer class="page-footer"><span>စမ်းသပ်နမူနာ · ငွေအစစ်၊ ကုန်အစစ်နှင့် မချိတ်ထားပါ။</span><button class="btn-link" onclick="openHelp()">အသုံးပြုနည်း</button></footer>`+
+ ``+
  (!storageOK?`<div class="mt">${note('ဘရောက်ဇာတွင် ဒေတာမသိမ်းနိုင်ပါ။ ပိတ်လိုက်ပါက စမ်းထားသောဒေတာ ပျောက်နိုင်ပါသည်။','amber')}</div>`:'');
  if(page==='receipts')renderReceiptRows();
  if(page==='sales')renderSaleRows();

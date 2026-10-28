@@ -74,7 +74,7 @@ renderNav=function(){
 render=function(){
  if(page!=='setup'){v2Render();patchCashViews();return;}
  clearToast();renderNav();
- document.getElementById('main').innerHTML=setupView()+`<footer class="page-footer"><span>စမ်းသပ်နမူနာ · ဤဘရောက်ဇာထဲမှာပဲ သိမ်းထားသည်။</span><button class="btn-link" onclick="openHelp()">အသုံးပြုနည်း</button></footer>`+(!storageOK?note('ဘရောက်ဇာတွင် ဒေတာမသိမ်းနိုင်ပါ။ ပိတ်ပါက ပျောက်နိုင်သည်။','amber'):'');
+ document.getElementById('main').innerHTML=setupView()+``+(!storageOK?note('ဘရောက်ဇာတွင် ဒေတာမသိမ်းနိုင်ပါ။ ပိတ်ပါက ပျောက်နိုင်သည်။','amber'):'');
 };
 function setupView(){
  if(setupSection==='products')return productList();

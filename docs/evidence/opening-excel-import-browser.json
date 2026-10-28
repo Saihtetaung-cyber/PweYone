@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "checks": [
+    "Authenticated clerk downloads the actual styled XLSX template from opening settings",
+    "Invalid stock name reports its row before any money or stock is imported",
+    "Preview preserves balances; explicit confirmation merges three ownership groups into a persisted draft, without posting cash/stock",
+    "Owner must complete the existing stock/account/party review before approval; approval creates exactly three lots with exact bag-cost conversion and retains origin/note after reload"
+  ],
+  "errors": []
+}

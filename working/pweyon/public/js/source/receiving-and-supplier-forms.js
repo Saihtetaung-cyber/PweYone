@@ -84,7 +84,7 @@ openModal=function(title,subtitle,body,footer='',wide=false){
  <div class="page-heading"><div><h1 id="modalTitle">${title}</h1>${subtitle?`<p class="subtitle">${subtitle}</p>`:''}</div></div>
  <div class="page-panel"><div class="modal-body"><div id="modalError" class="form-error" role="alert"></div>${body}</div>
  ${footer?`<footer class="modal-footer">${footer}</footer>`:''}</div>
- <div class="work-footer"><span>${storageOK?'စမ်းသပ်နမူနာ · ဤဘရောက်ဇာတွင် သိမ်းသည်။':'သတိ — ဘရောက်ဇာတွင် သိမ်းမရပါ။ ပိတ်ပါက ဒေတာပျောက်နိုင်သည်။'}</span><span>ပွဲရုံ</span></div></section>`;
+ </section>`;
  if(receiving)document.getElementById('modalError').style.margin='20px 25px 0';
  writeRoute('work',workView.id,route);window.scrollTo({top:0,behavior:'instant'});
  const id=workView.id;

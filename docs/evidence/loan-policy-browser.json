@@ -1,6 +1,7 @@
 {
   "passed": true,
   "results": [
+    "Real HTTP zero-percent policy saves/reloads, edit keeps zero visible, negative rate is blocked, zero-rate loan has zero interest after 10 days, and opening-loan validation distinguishes zero from blank",
     "Real HTTP policy create/reload/edit/deactivate/reactivate and loan policy selection passed; existing 2.5% loan retains 833.33 interest after policy changes; staff cannot edit"
   ],
   "errors": []

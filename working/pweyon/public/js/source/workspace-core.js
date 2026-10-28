@@ -183,7 +183,7 @@ function stat(label,value,unit,icon,foot='',cls=''){return `<div class="card sta
 function render(){
  clearToast();renderNav();
  let content=page==='home'?homePage():page==='receipts'?receiptsPage():page==='sales'?salesPage():page==='inventory'?inventoryPage():page==='cash'?cashPage():page==='prices'?pricesPage():page==='owner'?ownerPage():profitPage();
- document.getElementById('main').innerHTML=content+`<div class="page-footer"><span>ပွဲရုံလုပ်ငန်းအတွက် မြန်မာလို၊ ရိုးရိုးရှင်းရှင်း။</span><span>နမူနာဒေတာ · လုပ်ငန်းစည်းမျဉ်းအချို့ အတည်ပြုရန်ကျန်</span></div>`+(!storageOK?`<div class="mt">${note('ဤဘရောက်ဇာတွင် ဒေတာအမြဲသိမ်းဆည်းမရပါ။ စာမျက်နှာပိတ်ပါက စမ်းထားသည့်ဒေတာ ပျောက်နိုင်ပါသည်။','amber')}</div>`:'');
+ document.getElementById('main').innerHTML=content+``+(!storageOK?`<div class="mt">${note('ဤဘရောက်ဇာတွင် ဒေတာအမြဲသိမ်းဆည်းမရပါ။ စာမျက်နှာပိတ်ပါက စမ်းထားသည့်ဒေတာ ပျောက်နိုင်ပါသည်။','amber')}</div>`:'');
  if(page==='receipts')renderReceiptRows();
  if(page==='sales')renderSaleRows();
  if(page==='inventory')renderInventoryBody();

@@ -76,17 +76,36 @@
   return out;
  }
  function recoveries(partyId,requested){
-  let left=Number(requested)||0;const out=[];
+  let left=Number(requested??0);const out=[];
+  if(!Number.isFinite(left)||left<0)throw Error('ကြိုသုံးငွေ ပြန်နုတ်မည့် ပမာဏကို မှန်ကန်စွာ ဖြည့်ပါ။');
   for(const a of state.partnerAdvances.filter(a=>a.partnerId===partyId)){
    const available=a.amount-(a.allocations||[]).reduce((n,x)=>n+x.amount,0),amount=Math.min(left,available);
    if(amount>0){out.push({document_id:a.id,amount:str(amount)});left-=amount;}
   }if(left>0.00001)throw Error('ကြိုသုံးငွေလက်ကျန် မလောက်ပါ။');return out;
  }
+ function carriageOutlays(rows){
+  const partyId=rows[0]?.r?.partnerId,documents=new Set(rows.map(row=>String(row.r?.backendDocumentId||'')).filter(Boolean));
+  const receipts=state.receipts.filter(receipt=>rows.some(row=>row.r?.id===receipt.id)||(receipt.backendDocumentId&&documents.has(String(receipt.backendDocumentId))));
+  const ids=new Set(receipts.map(receipt=>String(receipt.carriageExpenseId||'')).filter(Boolean));
+  return state.expenses.filter(expense=>expense.recoverable&&expense.partnerId===partyId&&(ids.has(String(expense.id))||(expense.sourceDocumentId&&documents.has(String(expense.sourceDocumentId)))));
+ }
+ function outlayRemaining(expense){return expense.recovered?0:Math.max(0,Math.round(Number(expense.amount)*100)-(expense.settlementRecoveries74||[]).reduce((sum,recovery)=>sum+Math.round(Number(recovery.amount)*100),0))/100;}
+ function appendOutlayRecoveries(out,pool,requested){
+  const amountRequested=Number(requested??0);let left=Math.round(amountRequested*100);
+  if(!Number.isFinite(amountRequested)||amountRequested<0||Math.abs(amountRequested*100-left)>0.000001)throw Error('တန်ဆာခ ပြန်နုတ်မည့် ပမာဏကို မှန်ကန်စွာ ဖြည့်ပါ။');
+  for(const expense of pool){
+   const existing=out.find(row=>String(row.document_id)===String(expense.id));
+   const previous=Math.round(Number(existing?.amount||0)*100),available=Math.max(0,Math.round(outlayRemaining(expense)*100)-previous),amount=Math.min(left,available);
+   if(amount>0){if(existing)existing.amount=str((previous+amount)/100);else out.push({document_id:expense.id,amount:str(amount/100)});left-=amount;}
+  }
+  if(left>0)throw Error('တန်ဆာခ ယာယီစိုက်ငွေ လက်ကျန် မလောက်ပါ။');
+ }
  function voucher(){
   const sale=v4Kind==='sale',rows=readVoucherLines4(),c=readCharges4();
   const input={date:v('fDate'),party_id:v('fParty'),delivery:v('fDelivery'),payments:splits(),payment_amount:decimal('fPaid'),adjustments:adjustments(),labor:labor(),lines:rows.map(x=>sale?{lot_id:x.l?.id,quantity:decimal('vq'+x.i),price:decimal('vr'+x.i),basis:v('fBasis')==='bag'?'standard_bag':'viss',buyer_package_viss:decimal('vBuyerBag46'+x.i)}:{receipt_line_id:x.r?.id,price:decimal('vr'+x.i),basis:v('fBasis')==='bag'?'standard_bag':'viss',purchase_package_viss:decimal('vPurchaseBag47'+x.i),purchase_bags:decimal('vPurchaseCount55'+x.i)})};
   if(!sale){const partyId=rows[0]?.r?.partnerId;input.recoveries=recoveries(partyId,c.advance);input.loan_offsets=(c.loanPayments38||[]).filter(x=>x.principal+x.interest>0).map(x=>({document_id:x.loanId,principal:str(x.principal),interest:str(x.interest)}));
-   for(const row of c.dynamicRows||[]){if(row.recoveryKind==='carriage'||row.itemType==='carriage'){const amount=Number(row.amount)||0;let left=amount;for(const e of state.expenses.filter(e=>e.recoverable&&e.partnerId===partyId&&!e.recovered)){const n=Math.min(left,e.amount);if(n>0){input.recoveries.push({document_id:e.id,amount:str(n)});left-=n;}}input.adjustments=input.adjustments.filter(x=>x.rate_id!==row.rateId);}}
+   appendOutlayRecoveries(input.recoveries,carriageOutlays(rows),c.carriage);
+   for(const row of c.dynamicRows||[]){if(row.recoveryKind==='carriage'||row.itemType==='carriage'){appendOutlayRecoveries(input.recoveries,state.expenses.filter(e=>e.recoverable&&e.partnerId===partyId&&!e.recovered),row.amount);input.adjustments=input.adjustments.filter(x=>x.rate_id!==row.rateId);}}
   }return input;
  }
  // No legacy save may publish a client-computed business state.
@@ -158,11 +177,32 @@
  for(const [name,kind]of [['deleteAccountMaster51','account'],['deleteWarehouseMaster61','warehouse'],['deleteProductMaster','product'],['deletePartnerMaster','partner'],['deletePackType4','package'],['deleteDeductionRate','adjustment']])bind(name,'master.inactivate',id=>({kind,id:kind==='account'?account(id):id}),{page:'setup'});
  bind('saveDetailAndNew','receipt.edit',id=>({document_id:state.receipts.find(r=>r.id===id)?.backendDocumentId,vehicle:v('detailCar'),note:v('detailNote')}),{page:'receipts'});
  window.savePrices=event=>{event?.preventDefault();return command('prices.save',{prices:products(true).flatMap((p,i)=>p.grades.map(g=>({product_id:p.id,grade:g,price:v('price_'+i+'_'+g)}))).filter(p=>p.price)},{page:'prices'});};
+ const purchaseCarriageCharges=readCharges4;
+ readCharges4=function(...args){
+  const charges=purchaseCarriageCharges.apply(this,args),input=$('fCarriageRecovery');
+  if(v4Kind!=='purchase'||!input)return charges;
+  const previous=Number(charges.truck)||0,amount=Number(input.value);
+  charges.carriage=amount;charges.truck=amount;
+  if(charges.purchaseAdjustments2)charges.purchaseAdjustments2.deductionTotal+=amount-previous;
+  return charges;
+ };
  const purchaseMarketForm=voucherForm4;
  voucherForm4=function(...args){
   const result=purchaseMarketForm.apply(this,args);
   if(v4Kind!=='purchase'||!$('voucher4'))return result;
   const rows=readVoucherLines4();
+  const advance=$('fAdvance'),partyId=rows[0]?.r?.partnerId;
+  if(advance&&partyId){
+   const balance=Number(supplierBalance(partyId)),available=Number.isFinite(balance)?Math.max(0,balance):0;
+   advance.min='0';advance.max=String(available);advance.value=String(available);
+  }
+  const carriage=carriageOutlays(rows).reduce((sum,expense)=>sum+Math.round(outlayRemaining(expense)*100),0)/100,form=$('voucher4');
+  const carriageBox=document.createElement('section');carriageBox.className='summary-box mb';carriageBox.id='purchaseCarriageRecovery';
+  carriageBox.innerHTML=field('တန်ဆာခ (ခေါက်ရှည်) · ယာယီစိုက်ငွေ ပြန်နုတ်ရန်','fCarriageRecovery',{type:'number',value:carriage,min:0,max:carriage,step:0.01,suffix:'ကျပ်',help:'ပြန်နုတ်မည့်ငွေကို လက်ကျန်အတွင်း ပြင်နိုင်ပါသည်။ မနုတ်သေးလိုပါက 0 ထည့်ပါ။',extra:'oninput="calcVoucher4()"'});
+  const oldCarriage=[...form.querySelectorAll('.summary-box span')].find(node=>node.textContent.startsWith('တန်ဆာခ (ခေါက်ရှည်) · ကုန်လက်ခံချိန်'))?.closest('.summary-box');
+  oldCarriage?.remove();
+  const advanceField=advance?.closest('.field');
+  if(advanceField){carriageBox.style.gridColumn='1 / -1';advanceField.after(carriageBox);}else{const fees=form.querySelector('.v55-fees')||form,heading=fees.querySelector('.v55-section-heading');if(heading)heading.after(carriageBox);else fees.prepend(carriageBox);}
   const basis=$('fBasis');
   let selected=basis.value;
   const drafts={};
@@ -186,7 +226,7 @@
    drafts[selected]??=selected==='bag'?market():rows.map(()=>'');
    apply();
   });
-  if(selected==='bag')apply();
+  if(selected==='bag')apply();else calcVoucher4();
   return result;
  };
  bind('saveNotebook63','note.save',id=>({...(id?{id:id.replace(/^note:/,'')}:{ }),title:v('noteTitle63'),body:v('noteBody63'),date:v('noteDate63')}),{page:'setup'});
@@ -216,6 +256,10 @@
   return command('opening.approve',{}, {page:'setup'});
  };
  window.opening69SaveDraft=()=>{clearTimeout(openingTimer);openingTimer=null;return command('opening.draft',{draft:clone(state.initialOpening69)},{draft:true});};
+ window.pweServer.prepareOpeningImport=async()=>{
+  clearTimeout(openingTimer);openingTimer=null;await openingPromise;
+  return command('opening.draft',{draft:clone(state.initialOpening69)},{draft:true,quiet:true,keepForm:true});
+ };
  window.confirmTrader74=id=>{
   try{
    if(!checked('tsCheck74'))throw Error('ပေါင်းနုတ်ငွေ စစ်ပြီးကြောင်း အမှန်ခြစ်ပါ။');
@@ -366,8 +410,8 @@
   finally{busy=false;buttons(false);document.querySelectorAll('#accountSettingsForm input').forEach(el=>el.disabled=false);}
  };
  const oldNav=renderNav;renderNav=function(){oldNav();const select=$('roleSelect');if(select){select.disabled=actualRole!=='owner';select.title='အကောင့်ဖြင့် သတ်မှတ်ထားသော လုပ်ပိုင်ခွင့်';}document.querySelectorAll('[onclick="openReset()"],[onclick="resetDemo()"],.v2-home-footer,.side-foot,.clean-demo').forEach(el=>el.remove());if(viewRole==='owner')$('topNav')?.append(accountSettings,ownerPasswordSettings);$('topNav')?.append(logout);};
- const accountSettings=document.createElement('button');accountSettings.type='button';accountSettings.className='top-nav-btn';accountSettings.id='accountSettingsButton';accountSettings.textContent='Login Email / Password';accountSettings.onclick=()=>pweOpenAccount();
- const ownerPasswordSettings=document.createElement('button');ownerPasswordSettings.type='button';ownerPasswordSettings.className='top-nav-btn';ownerPasswordSettings.id='ownerPasswordSettingsButton';ownerPasswordSettings.textContent='ပိုင်ရှင် Password';ownerPasswordSettings.onclick=()=>pweOpenAccount(true);
+ const accountSettings=document.createElement('button');accountSettings.type='button';accountSettings.className='top-nav-btn';accountSettings.id='accountSettingsButton';accountSettings.innerHTML=I('users')+'<span>Login Email / Password</span>';accountSettings.onclick=()=>pweOpenAccount();
+ const ownerPasswordSettings=document.createElement('button');ownerPasswordSettings.type='button';ownerPasswordSettings.className='top-nav-btn';ownerPasswordSettings.id='ownerPasswordSettingsButton';ownerPasswordSettings.innerHTML=I('lock')+'<span>ပိုင်ရှင် Password</span>';ownerPasswordSettings.onclick=()=>pweOpenAccount(true);
  window.openReset=window.resetDemo=()=>report('Server business history cannot be reset from this interface.');
  const logout=document.createElement('form');logout.id='logoutForm';logout.method='POST';logout.action='/logout';logout.style.display='contents';logout.innerHTML='<input type="hidden" name="_token"><button class="top-nav-btn" type="submit"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5v14h4M13 8l4 4-4 4M8 12h9"/></svg><span>ထွက်မယ်</span></button>';logout.querySelector('input').value=document.querySelector('meta[name="csrf-token"]').content;
  // Persisted stock/money can only be refreshed from Laravel. Never send state back.

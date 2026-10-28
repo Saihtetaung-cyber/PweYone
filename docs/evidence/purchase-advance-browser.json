@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "results": [
+    "Real receiving advance 100000 autofills purchase; manually reduced 25000 is posted once, net is 775000, balance is 75000 after reload and recovery does not move cash again",
+    "Next voucher autofills remaining 75000, and manually choosing zero survives later price edits"
+  ],
+  "errors": []
+}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="D:\Pwal Yone\working\pweyon\phpunit.xml" tests="7" assertions="64" errors="0" failures="0" skipped="0" time="2.948057">
+    <testsuite name="Feature" tests="7" assertions="64" errors="0" failures="0" skipped="0" time="2.948057">
+      <testsuite name="Tests\Feature\BusinessFlowsTest" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" tests="7" assertions="64" errors="0" failures="0" skipped="0" time="2.948057">
+        <testcase name="test_opening_discrepancy_allows_work_without_balance_adjustment" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="399" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="2" time="1.064449"/>
+        <testcase name="test_morning_opening_shows_current_pweyon_cash_then_preserves_checked_snapshot" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="408" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="7" time="0.242236"/>
+        <testcase name="test_opening_cash_review_and_multiple_links_preserve_money_and_original_count" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="459" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="22" time="0.312240"/>
+        <testcase name="test_opening_cash_recount_requires_expected_amount_and_keeps_history_after_day_rollover" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="493" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="8" time="0.308642"/>
+        <testcase name="test_opening_cash_candidate_rules_and_legacy_same_day_opt_in" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="518" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="9" time="0.306943"/>
+        <testcase name="test_opening_cash_reversed_or_changed_links_reopen_and_can_be_resolved_again" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="546" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="8" time="0.277418"/>
+        <testcase name="test_opening_cash_owner_permissions_stale_forms_and_duplicate_link_guard" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="568" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="8" time="0.436129"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

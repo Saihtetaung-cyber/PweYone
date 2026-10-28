@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="D:\Pwal Yone\working\pweyon\phpunit.xml" tests="3" assertions="19" errors="0" failures="0" skipped="0" time="1.566049">
+    <testsuite name="Feature" tests="3" assertions="19" errors="0" failures="0" skipped="0" time="1.566049">
+      <testsuite name="Tests\Feature\BusinessFlowsTest" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" tests="3" assertions="19" errors="0" failures="0" skipped="0" time="1.566049">
+        <testcase name="test_receipt_from_closed_date_can_be_corrected_without_reopening_or_duplicating_stock" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="1049" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="14" time="1.348425"/>
+        <testcase name="test_receipt_edits_keep_identity_and_refuse_sold_line_changes" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="1086" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="2" time="0.137520"/>
+        <testcase name="test_receiving_carriage_edit_reverses_cash_without_duplicate_outlay" file="D:\Pwal Yone\working\pweyon\tests\Feature\BusinessFlowsTest.php" line="1426" class="Tests\Feature\BusinessFlowsTest" classname="Tests.Feature.BusinessFlowsTest" assertions="3" time="0.080104"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

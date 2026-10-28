@@ -27,12 +27,27 @@ final class Projection
         $s['cleanStart2'] = ['schema' => 1, 'serverManaged' => true];
         $s['closed'] = $day?->status === 'closed';
         $s['closing'] = $day?->closing ? json_decode($day->closing, true) : null;
-        $s['opening'] = ['checked' => (bool) $day?->opening_checked, 'expected' => $day?->opening_expected ?? '0', 'actual' => $day?->opening_actual, 'difference' => $day && $day->opening_actual !== null ? D::sub($day->opening_actual, $day->opening_expected) : '0', 'note' => $day?->opening_note ?? ''];
+        $reviews = app(OpeningCashReview::class);
+        $s['opening'] = $day ? $reviews->describe($day) : ['checked' => false, 'expected' => '0', 'actual' => null, 'difference' => '0', 'note' => '', 'status' => 'unchecked'];
+        $s['openingCashChecks'] = [];
+        if ($actor->role === 'owner' || DB::table('cash_accounts')->where('code', 'cash')->where('staff_can_view', true)->exists()) {
+            foreach (DB::table('business_days')->where('opening_checked', true)->when($actor->role !== 'owner', fn ($query) => $query->where('id', $day?->id))->orderByDesc('business_date')->get() as $checkedDay) {
+                $check = $reviews->describe($checkedDay);
+                if ($actor->role === 'owner' && in_array($check['status'], ['reviewed', 'invalid'], true)) {
+                    $check['candidates'] = $reviews->candidates($checkedDay);
+                    $check['legacyCandidates'] = $check['legacy'] ? $reviews->candidates($checkedDay, true) : [];
+                }
+                $s['openingCashChecks'][] = $check;
+            }
+        }
         $products = DB::table('products')->get()->keyBy('id');
         $parties = DB::table('partners')->get()->keyBy('id');
         $warehouses = DB::table('warehouses')->get()->keyBy('id');
         $accounts = DB::table('cash_accounts')->get()->keyBy('id');
         $visible = $accounts->filter(fn ($a) => $actor->role === 'owner' || $a->staff_can_view);
+        if ($actor->role !== 'owner' && ! $visible->contains(fn ($account) => $account->code === 'cash')) {
+            $s['opening'] = ['checked' => (bool) $day?->opening_checked, 'expected' => '0', 'actual' => null, 'difference' => '0', 'note' => '', 'status' => 'hidden'];
+        }
         if (! $day?->opening_checked) {
             $cash = $visible->first(fn ($account) => $account->code === 'cash' && $account->active);
             $s['opening']['expected'] = $cash?->balance ?? '0';
@@ -129,6 +144,22 @@ final class Projection
 
             return ['id' => (string) $l->id, 'product' => $products[$l->product_id]->name, 'grade' => $l->grade, 'qty' => $l->quantity ?? '0', 'weightKnown' => $l->quantity !== null, 'bags' => $l->bags ?? '0', 'actualBags' => $l->bags, 'rawBags' => $l->stock_form === 'loose' ? $l->bags ?? '0' : '0', 'bagType' => $l->stock_form === 'packaged' ? 'finished' : 'raw', 'packageCount' => $l->stock_form === 'packaged' ? $l->bags ?? '0' : '0', 'packageViss' => $l->package_viss ?? '0', 'packType' => $l->package_type_id ? (string) $l->package_type_id : '', 'owner' => $l->owner, 'name' => $l->owner === 'owned' ? 'ပွဲရုံပိုင်' : ($party?->name ?? ''), 'partnerId' => $l->owner === 'supplier' ? (string) ($l->party_id ?? '') : '', 'buyerId' => $l->owner === 'customer' ? (string) ($l->party_id ?? '') : '', 'cost' => $l->unit_cost, 'receiptId' => $l->owner !== 'customer' && $l->receipt_line_id ? (string) $l->receipt_line_id : '', 'saleId' => $l->sale_line_id ? (string) $l->sale_line_id : '', 'warehouse' => (string) $l->warehouse_id, 'batch' => $l->batch, 'entryDate' => $l->entry_date, 'stockForm' => $l->stock_form, 'originPartnerId' => $rec ? (string) $docs[$rec->document_id]->party_id : '', 'originReceiptNo' => $rec ? $docs[$rec->document_id]->number : ''];
         })->values()->all();
+        $openingEvents = $events->where('kind', 'opening')->keyBy('lot_id');
+        foreach ($s['lots'] as &$lot) {
+            $openingEvent = $openingEvents->get($lot['id']);
+            $openingRow = $openingEvent ? (R::details($openingEvent)['openingRow'] ?? []) : [];
+            if ($openingRow !== []) {
+                $lot['note'] = $openingRow['note'] ?? '';
+                if ($lot['owner'] === 'owned') {
+                    $lot['originPartnerId'] = (string) ($openingRow['originPartnerId'] ?? '');
+                    $lot['originSupplierName'] = $openingRow['originName'] ?? ($parties[$lot['originPartnerId']]->name ?? '');
+                    $lot['openingCostBasis71'] = $openingRow['costBasis'] ?? 'viss';
+                    $lot['openingCostPrice71'] = $openingRow['costInput'] ?? $openingRow['cost'] ?? '0';
+                    $lot['openingStandardViss71'] = $openingRow['costStandardViss'] ?? '';
+                }
+            }
+        }
+        unset($lot);
         $s['transactions'] = DB::table('cash_entries')->whereIn('account_id', $visible->keys())->orderBy('id')->get()->map(fn ($e) => ['id' => (string) $e->id, 'date' => $e->business_date, 'account' => $accounts[$e->account_id]->code, 'amount' => $e->amount, 'title' => $e->title, 'ref' => $docs[$e->document_id]->number, 'party' => $parties[$docs[$e->document_id]->party_id]->name ?? '', 'time' => date('H:i', strtotime($e->created_at))])->all();
         $s['partnerAdvances'] = [];
         $s['supplierLoans38'] = [];
@@ -152,7 +183,7 @@ final class Projection
                 $entry = DB::table('cash_entries')->where('document_id', $doc->id)->first();
                 if (! $entry || ! $visible->has($entry->account_id)) {
                     continue;
-                }$s['expenses'][] = ['id' => (string) $doc->id, 'date' => $doc->business_date, 'amount' => $doc->net, 'reason' => $doc->note, 'title' => $doc->note, 'account' => $accounts[$entry->account_id]->code, 'partnerId' => (string) ($doc->party_id ?? ''), 'receiptId' => $lines->firstWhere('document_id', $doc->source_document_id)?->id, 'recoverable' => $doc->kind === 'outlay', 'recovered' => D::cmp(D::sum($recoveries->where('source_document_id', $doc->id)->pluck('amount')), $doc->net) >= 0, 'settlementRecoveries74' => $recoveries->where('source_document_id', $doc->id)->map(fn ($r) => ['amount' => $r->amount])->values()->all(), 'paymentPending' => false];
+                }$s['expenses'][] = ['id' => (string) $doc->id, 'date' => $doc->business_date, 'amount' => $doc->net, 'reason' => $doc->note, 'title' => $doc->note, 'account' => $accounts[$entry->account_id]->code, 'partnerId' => (string) ($doc->party_id ?? ''), 'receiptId' => $lines->firstWhere('document_id', $doc->source_document_id)?->id, 'sourceDocumentId' => $doc->source_document_id !== null ? (string) $doc->source_document_id : null, 'recoverable' => $doc->kind === 'outlay', 'recovered' => D::cmp(D::sum($recoveries->where('source_document_id', $doc->id)->pluck('amount')), $doc->net) >= 0, 'settlementRecoveries74' => $recoveries->where('source_document_id', $doc->id)->map(fn ($r) => ['amount' => $r->amount])->values()->all(), 'paymentPending' => false];
             }
             if ($doc->kind === 'home_request') {
                 $s['requests'][] = ['id' => (string) $doc->id, 'no' => $doc->number, 'date' => $doc->business_date, 'amount' => $doc->net, 'receivedAmount' => $doc->paid, 'status' => $doc->status === 'partial' ? 'issued' : $doc->status, 'collector' => $x['collector'] ?? '', 'reason' => $x['reason'] ?? '', 'receipts' => $paymentRows($doc->id)];

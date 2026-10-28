@@ -46,7 +46,7 @@
   loanMarkup=source.querySelector('#loanList38')?.closest('section')?.innerHTML||'';
   if(cashTab==='debts')cashTab='payables';if(!tabs.some(x=>x[0]===cashTab))cashTab='movements';
   return `<div class="cash2-shell">${heading('','ငွေစာရင်း','လုပ်ဆောင်လိုသော Tab ကိုရွေးပြီး သက်ဆိုင်ရာစာရင်းကို ကြည့်ပါ။')}${strip?.outerHTML||''}`+
-   (state.opening.difference?`<div class="mb">${note('အဖွင့်ငွေ ကွာဟချက် '+cashText(state.opening.difference),'amber')}</div>`:'')+
+   (state.opening.difference&&!['linked','recounted'].includes(state.opening.status)?`<div class="mb">${note('အဖွင့်ငွေ ကွာဟချက် '+cashText(state.opening.difference),'amber')}</div>`:'')+
    `<nav class="cash2-tabs tabs" aria-label="ငွေစာရင်း အပိုင်းများ">${tabs.map(([k,t])=>`<button type="button" class="tab ${cashTab===k?'active':''}" ${cashTab===k?'aria-current="page"':''} onclick="cash2Tab('${k}')">${t}</button>`).join('')}</nav><div id="cashBody"></div></div>`;
  };
  window.cash2Tab=function(tab){if(!tabs.some(x=>x[0]===tab))return;cashTab=tab;render();};

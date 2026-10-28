@@ -24,7 +24,7 @@ final class BusinessService
     {
         abort_unless($actor->active, 403);
         R::require(Str::isUuid($key), 'A UUID Idempotency-Key is required.');
-        $ownerOnly = in_array($action, ['stock.check.approve', 'stock.check.reject', 'loan.create', 'cash.fund', 'cash.reverse', 'opening.approve', 'opening.reopen'], true)
+        $ownerOnly = in_array($action, ['day.review', 'day.resolve', 'stock.check.approve', 'stock.check.reject', 'loan.create', 'cash.fund', 'cash.reverse', 'opening.approve', 'opening.reopen'], true)
             || (in_array($action, ['master.save', 'master.inactivate'], true) && in_array($input['kind'] ?? '', ['account', 'funding_category', 'loan_policy'], true))
             || ($action === 'request.create' && ($input['kind'] ?? 'home') === 'home');
         abort_unless(! $ownerOnly || $actor->role === 'owner', 403, 'Owner permission is required.');
@@ -52,7 +52,7 @@ final class BusinessService
                 }
                 R::require(D::cmp($requested, $splitTotal) === 0, 'Payment splits must equal the entered payment amount.');
             }
-            if (! in_array($action, ['master.save', 'master.inactivate', 'opening.draft', 'opening.approve', 'day.open', 'day.next', 'stock.check.approve', 'stock.check.reject', 'prices.save', 'note.save', 'note.delete'], true)) {
+            if (! in_array($action, ['opening.import', 'day.review', 'day.resolve', 'master.save', 'master.inactivate', 'opening.draft', 'opening.approve', 'day.open', 'day.next', 'stock.check.approve', 'stock.check.reject', 'prices.save', 'note.save', 'note.delete'], true)) {
                 R::require($this->day->status === 'open', 'This business day is closed.');
                 R::require((bool) $this->day->opening_checked, 'Complete the opening cash check first.');
             }
@@ -60,6 +60,8 @@ final class BusinessService
                 'master.save' => $this->master($input),
                 'master.inactivate' => $this->inactivate($input),
                 'day.open' => $this->openDay($input),
+                'day.review' => app(OpeningCashReview::class)->decide($actor, $input, false),
+                'day.resolve' => app(OpeningCashReview::class)->decide($actor, $input, true),
                 'day.close' => $this->closeDay($input),
                 'day.next' => $this->nextDay(),
                 'receipt.create' => $this->receive($input),
@@ -85,6 +87,7 @@ final class BusinessService
                 'request.receive' => $this->receiveRequest($input),
                 'settlement.confirm' => $this->settle($input),
                 'opening.draft' => $this->openingDraft($input),
+                'opening.import' => $this->importOpening($input),
                 'opening.approve' => $this->approveOpening($input),
                 'opening.dispatch' => $this->openingDispatch($input),
                 'opening.credit' => $this->openingCredit($input),
@@ -115,12 +118,13 @@ final class BusinessService
         return $v;
     }
 
-    private function date(array $in): string
+    private function date(array $in, bool $allowClosed = false): string
     {
         $date = $in['date'] ?? $this->day->business_date;
         R::require(is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) && CarbonImmutable::hasFormat($date, 'Y-m-d'), 'Invalid business date.');
+        R::require(CarbonImmutable::createFromFormat('!Y-m-d', $date)->format('Y-m-d') === $date, 'Invalid business date.');
         R::require($date <= $this->day->business_date, 'Future business dates are not permitted.');
-        R::require(! DB::table('business_days')->where('business_date', $date)->where('status', 'closed')->exists(), 'This business date is closed.');
+        R::require($allowClosed || ! DB::table('business_days')->where('business_date', $date)->where('status', 'closed')->exists(), 'This business date is closed.');
 
         return $date;
     }
@@ -247,7 +251,8 @@ final class BusinessService
                 break;
             case 'loan_policy':
                 R::require(mb_strlen($values['name']) <= 255, 'Policy name is too long.');
-                $monthlyRate = $this->amount($data, 'monthlyRate', true, 8);
+                R::require(isset($data['monthlyRate']), 'Monthly interest rate is required.', 'monthlyRate');
+                $monthlyRate = $this->amount($data, 'monthlyRate', false, 8);
                 R::require(D::cmp($monthlyRate, '100') <= 0, 'Monthly interest rate must not exceed 100%.');
                 $values += ['monthly_rate' => $monthlyRate];
                 break;
@@ -305,12 +310,17 @@ final class BusinessService
     private function openDay(array $in): array
     {
         R::require($this->day->status === 'open' && ! $this->day->opening_checked, 'Opening check is already recorded.');
+        R::require(isset($in['actual']) && $in['actual'] !== '', 'လက်တွေ့ရေတွက်ငွေကို ဖြည့်ပါ။');
         $actual = $this->amount($in, 'actual');
         $cash = DB::table('cash_accounts')->where('code', 'cash')->where('active', true)->value('balance') ?? '0';
         $difference = D::sub($actual, (string) $cash);
-        $note = (string) ($in['note'] ?? '');
+        $note = $in['note'] ?? '';
+        R::require(is_string($note) && mb_strlen($note) <= 2000 && ! preg_match('/[<>\x00-\x08]/u', $note), 'မှတ်ချက်ကို မှန်ကန်စွာ ဖြည့်ပါ။');
         R::require(D::cmp($difference, '0') === 0 || trim($note) !== '', 'Explain the opening discrepancy.');
-        R::update('business_days', $this->day->id, ['opening_expected' => $cash, 'opening_actual' => $actual, 'opening_note' => $note, 'opening_checked' => true]);
+        R::update('business_days', $this->day->id, ['opening_expected' => $cash, 'opening_actual' => $actual, 'opening_note' => $note, 'opening_checked' => true, 'opening_review' => [
+            'submittedAt' => now()->toIso8601String(), 'submittedBy' => ['id' => (string) $this->actor->id, 'name' => $this->actor->name], 'submittedRole' => $this->actor->role,
+            'cashEntryWatermark' => DB::table('cash_entries')->max('id') ?? 0,
+        ]]);
 
         return ['difference' => D::money($difference), 'status' => D::cmp($difference, '0') === 0 ? 'matched' : 'pending'];
     }
@@ -417,7 +427,8 @@ final class BusinessService
             R::require(! DB::table('documents')->where('number', $header['number'])->where('id', '!=', $doc->id)->exists(), 'ဤဘောက်ချာနံပါတ် ရှိပြီးဖြစ်ပါသည်။ မှတ်တမ်းအမှတ်အသစ် ပြောင်းထည့်ပါ။', 'number');
         }
         if (isset($in['date'])) {
-            $header['business_date'] = $this->date($in);
+            // Receipt corrections may retain a closed historical date; new postings retain their date guard.
+            $header['business_date'] = $this->date($in, allowClosed: true);
         }
         if ($locked) {
             foreach ($header as $key => $value) {
@@ -922,7 +933,8 @@ final class BusinessService
         if (! empty($in['policy_id'])) {
             $policy = $this->active('loan_interest_policies', $in['policy_id']);
         } else {
-            $rate = $this->amount($in, 'rate', true, 8);
+            R::require(isset($in['rate']), 'Choose an active loan interest policy.');
+            $rate = $this->amount($in, 'rate', false, 8);
             $policy = DB::table('loan_interest_policies')->where('active', true)->where('monthly_rate', $rate)->first();
             R::require((bool) $policy, 'Choose an active loan interest policy.');
         }
@@ -1170,6 +1182,19 @@ final class BusinessService
         return ['date' => $date];
     }
 
+    private function importOpening(array $in): array
+    {
+        R::require(is_string($in['token'] ?? null), 'Excel ဖိုင်ကို အရင်စစ်ဆေးပါ။');
+        $draft = app(OpeningImport::class)->apply($this->actor, $in['token'], $this->day->business_date);
+        if ($this->actor->role !== 'owner') {
+            // openingDraft restores protected accounts from the stored draft, never from clerk input.
+            $visibleCodes = DB::table('cash_accounts')->where('staff_can_view', true)->pluck('code')->all();
+            $draft['accounts'] = array_intersect_key($draft['accounts'], array_fill_keys($visibleCodes, true));
+        }
+
+        return $this->openingDraft(['draft' => $draft]);
+    }
+
     private function openingDraft(array $in): array
     {
         $draft = $in['draft'] ?? [];
@@ -1241,8 +1266,9 @@ final class BusinessService
                 }$amount = D::value($value, 2);
                 $details = [];
                 if ($kind === 'loan') {
+                    R::require(isset($p['values']['loanRate']), 'Opening loan monthly rate is required.', 'loanRate');
                     $rate = D::value((string) ($p['values']['loanRate'] ?? '0'));
-                    R::require(D::cmp($rate, '0') > 0 && D::cmp($rate, '100') <= 0, 'Invalid opening loan monthly rate.');
+                    R::require(D::cmp($rate, '0') >= 0 && D::cmp($rate, '100') <= 0, 'Invalid opening loan monthly rate.');
                     $details = ['rate' => $rate, 'openingInterest' => D::value((string) ($p['values']['loanInterest'] ?? '0'), 2)];
                 }
                 $this->document('opening_'.$kind, ['party_id' => $party->id], ['net' => $amount, 'details' => $details, 'source_document_id' => $doc->id]);
@@ -1252,11 +1278,17 @@ final class BusinessService
             foreach ($g['rows'] as $row) {
                 $p = $this->active('products', $row['productId'] ?? null);
                 $w = $this->active('warehouses', $row['warehouse'] ?? null);
+                R::require(in_array($row['grade'] ?? '', json_decode($p->grades, true), true), 'Invalid opening product grade.');
                 $qty = D::value((string) ($row['qty'] ?? ''));
                 R::require(D::cmp($qty, '0') > 0, 'Opening stock must be positive.');
                 $bags = isset($row['bags']) && $row['bags'] !== '' ? D::value((string) $row['bags']) : null;
                 $cost = '0';
                 if ($g['kind'] === 'owned') {
+                    if (! empty($row['originPartnerId'])) {
+                        $origin = $this->active('partners', $row['originPartnerId']);
+                        R::require($origin->kind === 'supplier', 'Choose the original supplier.');
+                        $row['originName'] = $origin->name.($origin->locality ? ' ('.$origin->locality.')' : '');
+                    }
                     $input = D::value((string) ($row['costInput'] ?? $row['cost'] ?? '0'));
                     $cost = ($row['costBasis'] ?? 'viss') === 'bag' ? D::div($input, D::value((string) ($row['costStandardViss'] ?? ''))) : $input;
                 }
@@ -1266,7 +1298,7 @@ final class BusinessService
                     $sourceLine = $this->line($receipt, ['product_id' => $p->id, 'warehouse_id' => $w->id, 'grade' => $row['grade'] ?? '', 'quantity' => $qty, 'bags' => $bags, 'ownership' => 'supplier', 'details' => ['bagType' => 'weight', 'opening' => true]]);
                 }
                 $lot = R::insert('stock_lots', ['receipt_line_id' => $sourceLine?->id, 'product_id' => $p->id, 'warehouse_id' => $w->id, 'party_id' => $g['party'], 'owner' => $g['kind'], 'grade' => $row['grade'] ?? '', 'batch' => $this->label($row['batch'] ?? ''), 'quantity' => $qty, 'bags' => $bags, 'unit_cost' => $cost, 'entry_date' => $this->day->business_date]);
-                $this->event('opening', $lot, $qty, $bags, $doc);
+                $this->event('opening', $lot, $qty, $bags, $doc, null, ['openingRow' => $row]);
             }
         }
         R::update('documents', $doc->id, ['status' => 'approved', 'details' => array_merge($draft, ['posted' => ['accountsBefore' => $prior], 'approvedAt' => now()->toIso8601String()])]);

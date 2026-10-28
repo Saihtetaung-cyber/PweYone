@@ -18,6 +18,7 @@
         .intro h1 { margin: 0; font-size: clamp(28px, 2.8vw, 36px); line-height: 1.5; font-weight: 700; letter-spacing: -.6px; }
         .intro-description { margin: 20px 0 0; color: #c3d5e9; font-size: 14px; line-height: 2; }
         .intro-footer { margin: 0; color: #d6e3f2; font-size: 13px; line-height: 1.9; }
+        .intro-credits { margin: 14px 0 0; color: #d6e3f2; font-size: 12px; line-height: 1.9; }
         .login-panel { display: flex; align-items: center; justify-content: center; padding: 64px 40px; }
         .login-content { width: 100%; max-width: 432px; }
         .small-brand { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 32px; margin-bottom: 16px; border-radius: 8px; background: #eff4f9; color: #849caf; font-size: 12px; }
@@ -62,6 +63,7 @@
                 <p class="intro-description">သင့်အကောင့်ရဲ့ လုပ်ပိုင်ခွင့်အတိုင်း ဝင်ရောက်အသုံးပြုပါ။</p>
             </div>
             <p class="intro-footer">ပွဲရုံ · နေ့စဉ်လုပ်ငန်းစီမံမှု</p>
+            <p class="intro-credits">Product Owner - Htoo Zaw Oo<br>Developer By - Sai Htet Aung</p>
         </section>
         <section class="login-panel" aria-labelledby="login-title">
             <div class="login-content">

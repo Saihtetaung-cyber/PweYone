@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Domain\BusinessService;
 use App\Domain\Decimal as D;
+use App\Domain\OpeningCashReview;
+use App\Domain\OpeningWorkbook;
 use App\Domain\Projection;
 use App\Domain\Records as R;
 use App\Domain\Reports;
@@ -13,13 +15,17 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Illuminate\Validation\ValidationException;
+use PharData;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class BusinessFlowsTest extends TestCase
 {
+    private array $openingWorkbookPaths = [];
+
     protected User $owner;
 
     protected User $clerk;
@@ -64,6 +70,11 @@ class BusinessFlowsTest extends TestCase
 
     protected function tearDown(): void
     {
+        foreach ($this->openingWorkbookPaths as $path) {
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
         while (DB::transactionLevel() > 0) {
             DB::rollBack();
         }parent::tearDown();
@@ -104,6 +115,217 @@ class BusinessFlowsTest extends TestCase
     protected function equalDecimal(string $expected, mixed $actual): void
     {
         $this->assertSame(0, D::cmp($expected, (string) $actual), "Expected $expected, got $actual");
+    }
+
+    private function openingWorkbook(array $sheets): string
+    {
+        $base = tempnam(sys_get_temp_dir(), 'pwe-test-opening-');
+        $path = $base.'.xlsx';
+        unlink($base);
+        copy(resource_path('templates/opening-import.xlsx'), $path);
+        $this->openingWorkbookPaths[] = $path;
+        $archive = new PharData($path);
+        $index = 2;
+        foreach (OpeningWorkbook::HEADERS as $name => $headers) {
+            $doc = new \DOMDocument('1.0', 'UTF-8');
+            $root = $doc->appendChild($doc->createElementNS('http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'worksheet'));
+            $data = $root->appendChild($doc->createElement('sheetData'));
+            foreach (array_merge([$headers], $sheets[$name] ?? []) as $i => $values) {
+                $row = $data->appendChild($doc->createElement('row'));
+                $row->setAttribute('r', (string) ($i + 5));
+                foreach ($values as $j => $value) {
+                    $cell = $row->appendChild($doc->createElement('c'));
+                    $cell->setAttribute('r', chr(65 + $j).($i + 5));
+                    if (is_array($value)) {
+                        if (isset($value['formula'])) {
+                            $cell->appendChild($doc->createElement('f', $value['formula']));
+                        }
+                        $cell->appendChild($doc->createElement('v', $value['number'] ?? '1'));
+                    } else {
+                        $cell->setAttribute('t', 'inlineStr');
+                        $text = $cell->appendChild($doc->createElement('is'))->appendChild($doc->createElement('t'));
+                        $text->appendChild($doc->createTextNode((string) $value));
+                    }
+                }
+            }
+            $archive['xl/worksheets/sheet'.$index++.'.xml'] = $doc->saveXML();
+        }
+        unset($archive);
+
+        return $path;
+    }
+
+    private function previewOpeningWorkbook(string $path, ?User $actor = null): TestResponse
+    {
+        return $this->actingAs($actor ?? $this->owner)->withSession([WorkspaceAccess::SESSION_KEY => ($actor?->role ?? 'owner') === 'owner' ? 'owner' : 'staff'])
+            ->call('POST', '/api/opening/import/preview', [], [], [], ['CONTENT_TYPE' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'HTTP_ACCEPT' => 'application/json', 'HTTP_X_PWE_FILE_NAME' => rawurlencode('opening.xlsx')], file_get_contents($path));
+    }
+
+    public function test_opening_excel_template_download_uses_current_visible_masters(): void
+    {
+        foreach ([$this->owner, $this->clerk] as $actor) {
+            $response = $this->actingAs($actor)->withSession([WorkspaceAccess::SESSION_KEY => $actor->role === 'owner' ? 'owner' : 'staff'])->get('/opening/import/template')->assertOk();
+            $path = $response->baseResponse->getFile()->getPathname();
+            $this->openingWorkbookPaths[] = $path;
+            $archive = new PharData($path);
+            $lists = $archive['xl/worksheets/sheet1.xml']->getContent();
+            $this->assertStringContainsString('Sesame', $lists);
+            $this->assertStringContainsString('Trader (Town)', $lists);
+            $this->assertStringContainsString('Cash', $lists);
+            $this->assertSame($actor->role === 'owner', str_contains($lists, '>Home<'));
+            $this->assertSame($actor->role === 'owner', str_contains($lists, 'ကြိုထုတ်ငွေအရင်း'));
+            $this->assertSame(['ငွေလက်ကျန်' => [], 'ကုန်လက်ကျန်' => [], 'တစ်ဦးချင်းငွေကျန်' => []], app(OpeningWorkbook::class)->read($path));
+        }
+    }
+
+    public function test_opening_excel_preview_merge_and_owner_review_post_exactly_once(): void
+    {
+        $path = $this->openingWorkbook([
+            'ငွေလက်ကျန်' => [['Cash', '1,234,567'], ['Home', '500000']],
+            'ကုန်လက်ကျန်' => [
+                ['ပွဲရုံပိုင်', '', 'Sesame', 'A', 'Main', 'Owned batch', '100.25', '4', 'တစ်စံအိတ်ဈေး', '25000', '25', 'Trader (Town)', 'Imported owned note'],
+                ['ကုန်သည်ပိုင်', 'Trader (Town)', 'Sesame', 'A', 'Main', 'Supplier batch', '50.50', '2'],
+                ['ဝယ်သူပိုင်', 'Buyer', 'Sesame', 'A', 'Main', 'Buyer batch', '12.50'],
+            ],
+            'တစ်ဦးချင်းငွေကျန်' => [
+                ['ကုန်သည်', 'Trader (Town)', 'ကုန်သည်ကို ပေးရန်', '1000'],
+                ['ကုန်သည်', 'Trader (Town)', 'ကြိုသုံးငွေ', '2000'],
+                ['ကုန်သည်', 'Trader (Town)', 'ကြိုထုတ်ငွေအရင်း', '3000', '0', '50'],
+                ['ဝယ်သူ', 'Buyer', 'ဝယ်သူထံမှ ရရန်', '4000'],
+                ['ဝယ်သူ', 'Buyer', 'ဝယ်သူ ကြိုပေးထားငွေ', '5000'],
+            ],
+        ]);
+        $preview = $this->previewOpeningWorkbook($path)->assertOk()->json();
+        $this->assertSame(['accounts' => 2, 'stock' => 3, 'balances' => 5], $preview['counts']);
+        $this->assertSame(0, DB::table('documents')->count());
+        $input = ['token' => $preview['token']];
+        $key = (string) Str::uuid();
+        $response = $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => $input], ['Idempotency-Key' => $key])->assertOk();
+        $this->assertSame($response->json('result'), $this->runCommand('opening.import', $input, key: $key));
+        $draft = R::details(DB::table('documents')->where('kind', 'opening')->first());
+        $this->assertCount(1, $draft['own']['rows']);
+        $this->assertFalse($draft['own']['checked']);
+        $this->assertFalse($draft['accounts']['cash']['checked']);
+        $this->assertFalse($draft['groups']['supplier']);
+        $this->assertSame('0.00000000', $draft['parties'][$this->trader->id]['values']['loanRate']);
+        $this->assertSame('draft', $response->json('state.initialOpening69.status'));
+        $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+        $this->assertSame(0, DB::table('stock_lots')->count());
+        $this->assertSame(0, DB::table('cash_entries')->count());
+        $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => $input], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+        $this->postJson('/api/commands', ['action' => 'opening.approve', 'input' => []], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+        foreach ($draft['accounts'] as &$account) {
+            $account['checked'] = true;
+        }
+        unset($account);
+        $draft['own']['checked'] = true;
+        $draft['groups'] = ['supplier' => true, 'buyer' => true];
+        foreach ($draft['parties'] as &$party) {
+            $party['checked'] = true;
+        }
+        unset($party);
+        $this->runCommand('opening.draft', ['draft' => $draft]);
+        $approvalKey = (string) Str::uuid();
+        $this->runCommand('opening.approve', key: $approvalKey);
+        $this->runCommand('opening.approve', key: $approvalKey);
+        $this->assertSame(3, DB::table('stock_lots')->count());
+        $this->equalDecimal('163.25', DB::table('stock_lots')->sum('quantity'));
+        $this->equalDecimal('1000', DB::table('stock_lots')->where('owner', 'owned')->value('unit_cost'));
+        $this->equalDecimal('1234567', R::get('cash_accounts', $this->cash->id)->balance);
+        $loan = DB::table('documents')->where('kind', 'opening_loan')->first();
+        $this->equalDecimal('0', R::details($loan)['rate']);
+        $this->equalDecimal('50', R::details($loan)['openingInterest']);
+        $owned = collect(app(Projection::class)->forUser($this->owner)['lots'])->firstWhere('owner', 'owned');
+        $this->assertSame('Imported owned note', $owned['note']);
+        $this->assertSame((string) $this->trader->id, $owned['originPartnerId']);
+        $this->assertSame('bag', $owned['openingCostBasis71']);
+        $this->previewOpeningWorkbook($path)->assertUnprocessable();
+    }
+
+    public function test_opening_excel_invalid_rows_formulas_and_permissions_leave_draft_untouched(): void
+    {
+        $valid = $this->openingWorkbook(['ငွေလက်ကျန်' => [['Cash', '100']]]);
+        $this->previewOpeningWorkbook($valid, $this->clerk)->assertOk();
+        foreach ([
+            ['ငွေလက်ကျန်' => [['Home', '100']]],
+            ['တစ်ဦးချင်းငွေကျန်' => [['ကုန်သည်', 'Trader (Town)', 'ကြိုထုတ်ငွေအရင်း', '100', '0', '0']]],
+        ] as $rows) {
+            $this->previewOpeningWorkbook($this->openingWorkbook($rows), $this->clerk)->assertUnprocessable();
+        }
+        $mixed = $this->openingWorkbook(['ငွေလက်ကျန်' => [['Cash', '100'], ['Cash', '200']], 'ကုန်လက်ကျန်' => [['ပွဲရုံပိုင်', '', 'Missing product', 'A', 'Main', '', '1', '', 'တစ်ပိဿာဈေး', '100']]]);
+        $response = $this->previewOpeningWorkbook($mixed)->assertUnprocessable();
+        $this->assertArrayHasKey('ငွေလက်ကျန် · အတန်း 7', $response->json('errors'));
+        $this->previewOpeningWorkbook($this->openingWorkbook(['ငွေလက်ကျန်' => [['Cash', ['formula' => '1+1']]]]))->assertUnprocessable();
+        $this->previewOpeningWorkbook($this->openingWorkbook([]))->assertUnprocessable();
+        $this->assertSame(0, DB::table('documents')->count());
+        $this->assertSame(0, DB::table('stock_lots')->count());
+        $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+        $preview = $this->previewOpeningWorkbook($valid)->assertOk()->json();
+        $this->actingAs($this->owner)->withSession([WorkspaceAccess::SESSION_KEY => 'staff'])->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => $preview['token']]], ['Idempotency-Key' => (string) Str::uuid()])->assertForbidden();
+        $this->actingAs($this->owner)->withSession([WorkspaceAccess::SESSION_KEY => 'owner'])->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => 'tampered']], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+        R::update('products', $this->product->id, ['name' => 'Renamed after preview']);
+        $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => $preview['token']]], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+        $this->assertSame(0, DB::table('documents')->count());
+    }
+
+    public function test_opening_excel_clerk_merge_preserves_owner_loan_and_hidden_account_and_blocks_repeat_or_expired_token(): void
+    {
+        $draft = ['schema' => 1, 'status' => 'draft', 'startDate' => '2026-10-25', 'accounts' => ['home' => ['amount' => '9999', 'checked' => true]], 'own' => ['stock' => 'no', 'rows' => [], 'checked' => true], 'parties' => [(string) $this->trader->id => ['answers' => ['stock' => 'no', 'loan' => 'yes'], 'rows' => [], 'values' => ['loan' => '700', 'loanInterest' => '1', 'loanRate' => '3'], 'checked' => true]], 'groups' => ['supplier' => true, 'buyer' => true]];
+        $this->runCommand('opening.draft', ['draft' => $draft]);
+        $path = $this->openingWorkbook(['ငွေလက်ကျန်' => [['Cash', '၀']], 'တစ်ဦးချင်းငွေကျန်' => [['ကုန်သည်', 'Trader (Town)', 'ကုန်သည်ကို ပေးရန်', ['number' => '1E+3']]]]);
+        $preview = $this->previewOpeningWorkbook($path, $this->clerk)->assertOk()->json();
+        $response = $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => $preview['token']]], ['Idempotency-Key' => (string) Str::uuid()])->assertOk();
+        $this->assertArrayNotHasKey('home', $response->json('state.initialOpening69.accounts'));
+        $saved = R::details(DB::table('documents')->where('kind', 'opening')->first());
+        $this->assertSame('9999', $saved['accounts']['home']['amount']);
+        $this->assertSame('0', $saved['accounts']['cash']['amount']);
+        $this->assertSame('700', $saved['parties'][$this->trader->id]['values']['loan']);
+        $this->assertSame('1000', $saved['parties'][$this->trader->id]['values']['payable']);
+        $this->assertFalse($saved['parties'][$this->trader->id]['checked']);
+        $again = $this->previewOpeningWorkbook($path, $this->clerk)->assertOk()->json();
+        $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => $again['token']]], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+        $newPath = $this->openingWorkbook(['ငွေလက်ကျန်' => [['Cash', '1']]]);
+        $next = $this->previewOpeningWorkbook($newPath, $this->clerk)->assertOk()->json();
+        $this->travel(31)->minutes();
+        try {
+            $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => $next['token']]], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+        } finally {
+            $this->travelBack();
+        }
+        $this->assertSame($saved, R::details(DB::table('documents')->where('kind', 'opening')->first()));
+    }
+
+    public function test_opening_excel_requires_auth_and_rejects_oversized_non_xlsx_and_xml_entities(): void
+    {
+        $this->get('/opening/import/template')->assertRedirect('/login');
+        $this->postJson('/api/opening/import/preview', [])->assertUnauthorized();
+        $path = $this->openingWorkbook(['ငွေလက်ကျန်' => [['Cash', '100']]]);
+        $this->actingAs($this->owner)->withSession([WorkspaceAccess::SESSION_KEY => 'owner'])
+            ->call('POST', '/api/opening/import/preview', [], [], [], ['HTTP_ACCEPT' => 'application/json', 'HTTP_X_PWE_FILE_NAME' => 'opening.txt'], file_get_contents($path))->assertUnprocessable();
+        $this->call('POST', '/api/opening/import/preview', [], [], [], ['HTTP_ACCEPT' => 'application/json', 'HTTP_X_PWE_FILE_NAME' => 'opening.xlsx'], str_repeat('x', 2097153))->assertUnprocessable();
+        $archive = new PharData($path);
+        $source = $archive['xl/workbook.xml']->getContent();
+        $source = str_replace('?>', '?><!DOCTYPE workbook [<!ENTITY test SYSTEM "file:///pweyon-nonexistent-test-file">]>', $source);
+        $archive['xl/workbook.xml'] = $source;
+        unset($archive);
+        $this->previewOpeningWorkbook($path)->assertUnprocessable();
+        $this->assertSame(0, DB::table('documents')->count());
+    }
+
+    public function test_opening_excel_duplicate_stock_batches_are_rejected_within_file_and_against_existing_draft(): void
+    {
+        $row = ['ပွဲရုံပိုင်', '', 'Sesame', 'A', 'Main', 'Same batch', '100', '', 'တစ်ပိဿာဈေး', '1000'];
+        $this->previewOpeningWorkbook($this->openingWorkbook(['ကုန်လက်ကျန်' => [$row, $row]]))->assertUnprocessable();
+        $this->assertSame(0, DB::table('documents')->count());
+        $first = $this->previewOpeningWorkbook($this->openingWorkbook(['ကုန်လက်ကျန်' => [$row]]))->assertOk()->json();
+        $this->postJson('/api/commands', ['action' => 'opening.import', 'input' => ['token' => $first['token']]], ['Idempotency-Key' => (string) Str::uuid()])->assertOk();
+        $changedFile = $this->openingWorkbook(['ကုန်လက်ကျန်' => [$row], 'ငွေလက်ကျန်' => [['Cash', '10']]]);
+        $this->previewOpeningWorkbook($changedFile)->assertUnprocessable();
+        $draft = R::details(DB::table('documents')->where('kind', 'opening')->first());
+        $this->assertCount(1, $draft['own']['rows']);
+        $this->assertCount(1, $draft['imports']);
+        $this->assertSame(0, DB::table('stock_lots')->count());
+        $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
     }
 
     public function test_receive_purchase_partial_payment(): void
@@ -358,6 +580,34 @@ class BusinessFlowsTest extends TestCase
         $this->equalDecimal('1185000', R::get('documents', $p['document_id'])->net);
     }
 
+    public function test_partial_carriage_recovery_preserves_outlay_and_cash_and_rejects_excess(): void
+    {
+        $receipt = $this->runCommand('receipt.create', ['party_id' => $this->trader->id, 'warehouse_id' => $this->warehouse->id, 'carriage_amount' => '12000.34', 'carriage_account_id' => $this->cash->id, 'lines' => [['product_id' => $this->product->id, 'grade' => 'A', 'bag_type' => 'weight', 'quantity' => '1000']]]);
+        $outlay = DB::table('documents')->where('kind', 'outlay')->where('source_document_id', $receipt['document_id'])->first();
+        $before = R::get('cash_accounts', $this->cash->id)->balance;
+        $input = ['lines' => [['receipt_line_id' => $receipt['line_ids'][0], 'price' => '800', 'basis' => 'viss']], 'recoveries' => [['document_id' => $outlay->id, 'amount' => '5000.12']]];
+        $key = (string) Str::uuid();
+        $purchase = $this->runCommand('purchase.create', $input, $this->owner, $key);
+        $this->assertSame($purchase, $this->runCommand('purchase.create', $input, $this->owner, $key));
+        $this->equalDecimal('794999.88', R::get('documents', $purchase['document_id'])->net);
+        $this->equalDecimal($before, R::get('cash_accounts', $this->cash->id)->balance);
+        $this->equalDecimal('12000.34', R::get('documents', $outlay->id)->net);
+        $this->assertSame(1, DB::table('recoveries')->where('source_document_id', $outlay->id)->count());
+        $state = app(Projection::class)->forUser($this->owner);
+        $expense = collect($state['expenses'])->firstWhere('id', (string) $outlay->id);
+        $this->assertSame((string) $receipt['document_id'], $expense['sourceDocumentId']);
+        $this->assertFalse($expense['recovered']);
+        $this->equalDecimal('5000.12', $expense['settlementRecoveries74'][0]['amount']);
+        $other = $this->receive('1000');
+        try {
+            $this->purchase($other['line_ids'][0], ['recoveries' => [['document_id' => $outlay->id, 'amount' => '7000.23']]]);
+            $this->fail('Recovery cannot exceed the remaining carriage balance.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(1, DB::table('documents')->where('kind', 'purchase')->count());
+            $this->assertSame(1, DB::table('recoveries')->where('source_document_id', $outlay->id)->count());
+        }
+    }
+
     public function test_home_request_issuance_and_partial_receipts_are_separate(): void
     {
         $r = $this->runCommand('request.create', ['kind' => 'home', 'amount' => '100000', 'collector' => 'Clerk', 'reason' => 'Working cash']);
@@ -393,6 +643,166 @@ class BusinessFlowsTest extends TestCase
         $this->equalDecimal('321000', $state['opening']['actual']);
         $this->equalDecimal('0', $state['opening']['difference']);
         $this->assertSame(0, DB::table('cash_entries')->count());
+    }
+
+    private function cashCheck(?string $date = null): array
+    {
+        $day = DB::table('business_days')->when($date, fn ($q) => $q->where('business_date', $date))->orderByDesc('business_date')->first();
+
+        return app(OpeningCashReview::class)->describe($day);
+    }
+
+    private function openingDecision(string $action, array $extra = [], ?string $date = null): array
+    {
+        $check = $this->cashCheck($date);
+
+        return $this->runCommand($action, $extra + ['id' => $check['id'], 'fingerprint' => $check['fingerprint'], 'confirmed' => true]);
+    }
+
+    private function assertOpeningRejected(string $action, array $extra = []): void
+    {
+        $before = DB::table('cash_entries')->count();
+        try {
+            $this->openingDecision($action, $extra);
+            $this->fail('Invalid opening cash decision was accepted.');
+        } catch (ValidationException $e) {
+            $this->assertNotEmpty($e->errors());
+        }
+        $this->assertSame($before, DB::table('cash_entries')->count());
+    }
+
+    private function openingDiscrepancy(string $actual = '1980000'): void
+    {
+        DB::table('business_days')->update(['opening_checked' => false]);
+        $this->runCommand('day.open', ['actual' => $actual, 'note' => 'Check original cash'], $this->clerk);
+    }
+
+    public function test_opening_cash_review_and_multiple_links_preserve_money_and_original_count(): void
+    {
+        $this->openingDiscrepancy();
+        $check = $this->cashCheck();
+        $this->assertSame('pending', $check['status']);
+        $this->assertSame('clerk', $check['submittedRole']);
+        $this->assertNotNull($check['submittedAt']);
+        $this->receive('300');
+        $this->assertOpeningRejected('day.resolve', ['method' => 'recount', 'actual' => '2000000', 'note' => 'Too early']);
+        $this->assertOpeningRejected('day.review', ['confirmed' => false]);
+        $this->openingDecision('day.review', ['note' => 'Investigating']);
+        $this->assertSame('reviewed', $this->cashCheck()['status']);
+        $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+        foreach (['12000', '8000'] as $amount) {
+            $this->runCommand('expense.create', ['amount' => $amount, 'reason' => 'Previously omitted expense', 'account_id' => $this->cash->id], $this->clerk);
+        }
+        $ids = DB::table('cash_entries')->pluck('id')->all();
+        $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => [$ids[0]], 'note' => 'Partial']);
+        $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => [$ids[0], $ids[0]], 'note' => 'Duplicate']);
+        $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => $ids, 'note' => '']);
+        $check = $this->cashCheck();
+        $input = ['id' => $check['id'], 'fingerprint' => $check['fingerprint'], 'confirmed' => true, 'method' => 'link', 'entry_ids' => $ids, 'note' => 'Found omitted expenses'];
+        $key = (string) Str::uuid();
+        $first = $this->runCommand('day.resolve', $input, key: $key);
+        $this->assertSame($first, $this->runCommand('day.resolve', $input, key: $key));
+        $check = $this->cashCheck();
+        $this->assertSame('linked', $check['status']);
+        $this->assertCount(2, $check['resolution']['entries']);
+        $this->equalDecimal('1980000', $check['actual']);
+        $this->equalDecimal('-20000', $check['difference']);
+        $this->equalDecimal('1980000', R::get('cash_accounts', $this->cash->id)->balance);
+        $this->assertSame(2, DB::table('cash_entries')->count());
+    }
+
+    public function test_opening_cash_recount_requires_expected_amount_and_keeps_history_after_day_rollover(): void
+    {
+        $this->openingDiscrepancy();
+        $this->runCommand('day.close', ['actual' => '1980000', 'note' => 'Unresolved opening', 'confirmed' => true]);
+        $this->runCommand('day.next');
+        $this->assertFalse($this->cashCheck()['checked']);
+        $this->openingDecision('day.review', [], '2026-10-25');
+        $old = $this->cashCheck('2026-10-25');
+        foreach (['1990000', '1980000'] as $actual) {
+            try {
+                $this->runCommand('day.resolve', ['id' => $old['id'], 'fingerprint' => $old['fingerprint'], 'method' => 'recount', 'actual' => $actual, 'confirmed' => true, 'note' => 'Still different']);
+                $this->fail('Unmatched recount accepted.');
+            } catch (ValidationException $e) {
+                $this->assertNotEmpty($e->errors());
+            }
+        }
+        $this->openingDecision('day.resolve', ['method' => 'recount', 'actual' => '2000000', 'note' => 'Original count omitted a bundle'], '2026-10-25');
+        $state = app(Projection::class)->forUser($this->owner);
+        $this->assertSame('recounted', $state['openingCashChecks'][0]['status']);
+        $this->equalDecimal('1980000', $state['openingCashChecks'][0]['actual']);
+        $this->equalDecimal('2000000', $state['openingCashChecks'][0]['resolution']['actual']);
+        $this->assertSame([], app(Projection::class)->forUser($this->clerk)['openingCashChecks']);
+        $this->assertSame(0, DB::table('cash_entries')->count());
+    }
+
+    public function test_opening_cash_candidate_rules_and_legacy_same_day_opt_in(): void
+    {
+        $this->runCommand('expense.create', ['amount' => '100', 'reason' => 'Already recorded', 'account_id' => $this->cash->id]);
+        $preexisting = DB::table('cash_entries')->value('id');
+        $this->openingDiscrepancy('1999800');
+        $this->openingDecision('day.review');
+        $this->runCommand('expense.create', ['amount' => '100', 'reason' => 'Correction', 'account_id' => $this->cash->id]);
+        $valid = DB::table('cash_entries')->max('id');
+        $bank = R::insert('cash_accounts', ['code' => 'bank-test', 'name' => 'Bank', 'type' => 'bank']);
+        $this->runCommand('cash.fund', ['amount' => '100', 'source_id' => $this->home->id, 'destination_id' => $bank->id, 'description' => 'Home to bank', 'confirmed' => true]);
+        $this->runCommand('expense.create', ['amount' => '101', 'reason' => 'Too large', 'account_id' => $this->cash->id]);
+        $this->runCommand('cash.fund', ['amount' => '100', 'destination_id' => $this->cash->id, 'description' => 'Wrong direction', 'confirmed' => true]);
+        $service = app(OpeningCashReview::class);
+        $day = DB::table('business_days')->first();
+        $this->assertSame([(string) $valid], array_column($service->candidates($day, true), 'id'));
+        $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => [$preexisting], 'include_legacy_same_day' => true, 'note' => 'Cannot bypass new snapshot']);
+        $meta = $service->metadata($day);
+        unset($meta['cashEntryWatermark'], $meta['submittedAt'], $meta['submittedBy'], $meta['submittedRole']);
+        R::update('business_days', $day->id, ['opening_review' => $meta]);
+        $day = R::get('business_days', $day->id);
+        $this->assertSame([], $service->candidates($day));
+        $this->assertContains((string) $preexisting, array_column($service->candidates($day, true), 'id'));
+        $this->assertNull($service->describe($day)['submittedAt']);
+        $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => [$valid], 'note' => 'Missing opt in']);
+        $this->openingDecision('day.resolve', ['method' => 'link', 'entry_ids' => [$valid], 'include_legacy_same_day' => true, 'note' => 'Evidence checked']);
+        $this->assertSame('linked', $this->cashCheck()['status']);
+    }
+
+    public function test_opening_cash_reversed_or_changed_links_reopen_and_can_be_resolved_again(): void
+    {
+        $this->openingDiscrepancy('2000100');
+        $this->openingDecision('day.review');
+        $fund = $this->runCommand('cash.fund', ['amount' => '100', 'destination_id' => $this->cash->id, 'description' => 'Omitted cash in', 'confirmed' => true]);
+        $entry = DB::table('cash_entries')->where('document_id', $fund['document_id'])->first();
+        $this->openingDecision('day.resolve', ['method' => 'link', 'entry_ids' => [$entry->id], 'note' => 'Verified']);
+        $this->assertSame('linked', $this->cashCheck()['status']);
+        R::update('cash_entries', $entry->id, ['amount' => '99']);
+        $this->assertSame('invalid', $this->cashCheck()['status']);
+        R::update('cash_entries', $entry->id, ['amount' => '100', 'business_date' => '2026-10-24']);
+        $this->assertSame('invalid', $this->cashCheck()['status']);
+        R::update('cash_entries', $entry->id, ['business_date' => '2026-10-25']);
+        $this->runCommand('cash.reverse', ['document_id' => $fund['document_id'], 'reason' => 'Wrong cash receipt']);
+        $this->assertSame('invalid', $this->cashCheck()['status']);
+        $this->assertSame([], app(OpeningCashReview::class)->candidates(DB::table('business_days')->first()));
+        $this->openingDecision('day.resolve', ['method' => 'recount', 'actual' => '2000000', 'note' => 'Recounted original cash']);
+        $this->assertSame('recounted', $this->cashCheck()['status']);
+        $this->assertCount(1, $this->cashCheck()['history']);
+        $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+    }
+
+    public function test_opening_cash_owner_permissions_stale_forms_and_duplicate_link_guard(): void
+    {
+        $this->openingDiscrepancy();
+        $check = $this->cashCheck();
+        foreach (['day.review', 'day.resolve'] as $action) {
+            $this->actingAs($this->clerk)->postJson('/api/commands', ['action' => $action, 'input' => ['id' => $check['id'], 'fingerprint' => $check['fingerprint'], 'confirmed' => true]], ['Idempotency-Key' => (string) Str::uuid()])->assertForbidden();
+        }
+        $this->actingAs($this->owner)->withSession([WorkspaceAccess::SESSION_KEY => 'staff'])->postJson('/api/commands', ['action' => 'day.review', 'input' => ['id' => $check['id'], 'fingerprint' => $check['fingerprint'], 'confirmed' => true]], ['Idempotency-Key' => (string) Str::uuid()])->assertForbidden();
+        $this->openingDecision('day.review');
+        $this->assertOpeningRejected('day.resolve', ['fingerprint' => $check['fingerprint'], 'method' => 'recount', 'actual' => '2000000', 'note' => 'Stale']);
+        $this->runCommand('expense.create', ['amount' => '20000', 'reason' => 'Correction', 'account_id' => $this->cash->id]);
+        $id = DB::table('cash_entries')->value('id');
+        $this->openingDecision('day.resolve', ['method' => 'link', 'entry_ids' => [$id], 'note' => 'Linked once']);
+        $meta = ['reviewedAt' => now()->toIso8601String()];
+        $other = R::insert('business_days', ['business_date' => '2026-10-24', 'opening_checked' => true, 'opening_expected' => '2000000', 'opening_actual' => '1980000', 'opening_review' => $meta]);
+        $this->assertSame([], app(OpeningCashReview::class)->candidates($other, true));
+        $this->assertOpeningRejected('day.resolve', ['method' => 'recount', 'actual' => '2000000', 'note' => 'Already resolved']);
     }
 
     public function test_daily_close_next_day_preserves_unfinished_work(): void
@@ -857,6 +1267,43 @@ class BusinessFlowsTest extends TestCase
         $this->assertSame(0, DB::table('documents')->where('kind', 'opening_receivable')->count());
     }
 
+    public function test_receipt_from_closed_date_can_be_corrected_without_reopening_or_duplicating_stock(): void
+    {
+        $r = $this->receive('300');
+        $lotId = $this->lot()->id;
+        $this->runCommand('day.close', ['actual' => '2000000', 'transfer' => '0', 'confirmed' => true]);
+        $closing = DB::table('business_days')->where('business_date', '2026-10-25')->value('closing');
+        $this->runCommand('day.next');
+        $this->runCommand('day.open', ['actual' => '2000000']);
+        $input = ['document_id' => $r['document_id'], 'date' => '2026-10-25', 'note' => 'Historical receipt correction', 'lines' => [['id' => $r['line_ids'][0], 'quantity' => '350', 'bag_type' => 'weight']]];
+        $key = (string) Str::uuid();
+        $response = $this->actingAs($this->clerk)->postJson('/api/commands', ['action' => 'receipt.edit', 'input' => $input], ['Idempotency-Key' => $key])->assertOk();
+        $first = $response->json('result');
+        $this->assertSame($first, $this->runCommand('receipt.edit', $input, $this->clerk, $key));
+        $this->assertSame($lotId, $this->lot()->id);
+        $this->equalDecimal('350', $this->lot()->quantity);
+        $doc = R::get('documents', $r['document_id']);
+        $this->assertSame('2026-10-25', $doc->business_date);
+        $this->assertSame('Historical receipt correction', $doc->note);
+        $this->assertSame('closed', DB::table('business_days')->where('business_date', '2026-10-25')->value('status'));
+        $this->assertSame($closing, DB::table('business_days')->where('business_date', '2026-10-25')->value('closing'));
+        $this->assertSame(1, DB::table('stock_events')->where('kind', 'receipt_correction')->count());
+        $this->assertSame(0, DB::table('cash_entries')->count());
+        foreach (['2026-10-25', '2026-10-27', '2026-02-30'] as $date) {
+            try {
+                if ($date === '2026-10-25') {
+                    $this->runCommand('receipt.create', ['date' => $date, 'party_id' => $this->trader->id, 'warehouse_id' => $this->warehouse->id, 'lines' => [['product_id' => $this->product->id, 'grade' => 'A', 'bag_type' => 'weight', 'quantity' => '1']]]);
+                } else {
+                    $this->runCommand('receipt.edit', array_replace($input, ['date' => $date]));
+                }
+                $this->fail('Invalid or closed new-posting date was accepted.');
+            } catch (ValidationException $e) {
+                $this->assertNotEmpty($e->errors());
+            }
+        }
+        $this->equalDecimal('350', $this->lot()->quantity);
+    }
+
     public function test_receipt_edits_keep_identity_and_refuse_sold_line_changes(): void
     {
         $r = $this->receive('300');
@@ -1098,6 +1545,42 @@ class BusinessFlowsTest extends TestCase
         $this->equalDecimal('5', R::details(R::get('documents', $newLoan['document_id']))['rate']);
     }
 
+    public function test_zero_percent_policy_has_no_accrued_interest_and_preserves_its_loan_snapshot(): void
+    {
+        $input = ['kind' => 'loan_policy', 'data' => ['name' => 'Interest free', 'monthlyRate' => '0']];
+        $policy = $this->runCommand('master.save', $input)['id'];
+        $this->equalDecimal('0', R::get('loan_interest_policies', $policy)->monthly_rate);
+        $loan = $this->runCommand('loan.create', ['policy_id' => $policy, 'party_id' => $this->trader->id, 'amount' => '100000', 'account_id' => $this->cash->id, 'date' => '2026-10-15']);
+        $input['id'] = $policy;
+        $input['data']['monthlyRate'] = '5';
+        $this->runCommand('master.save', $input);
+        $this->equalDecimal('0', R::details(R::get('documents', $loan['document_id']))['rate']);
+        try {
+            $this->runCommand('loan.repay', ['document_id' => $loan['document_id'], 'principal' => '10000', 'interest' => '1', 'account_id' => $this->cash->id]);
+            $this->fail('A zero-rate loan cannot collect accrued interest.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(0, DB::table('payments')->where('document_id', $loan['document_id'])->count());
+        }
+        $this->runCommand('loan.repay', ['document_id' => $loan['document_id'], 'principal' => '10000', 'interest' => '0', 'account_id' => $this->cash->id]);
+        $this->equalDecimal('0', DB::table('payments')->where('document_id', $loan['document_id'])->sum('interest'));
+        $this->equalDecimal('10000', DB::table('payments')->where('document_id', $loan['document_id'])->sum('principal'));
+        $input['data']['monthlyRate'] = '0';
+        $this->runCommand('master.save', $input);
+        $legacy = $this->runCommand('loan.create', ['rate' => '0', 'party_id' => $this->trader->id, 'amount' => '1000', 'account_id' => $this->cash->id]);
+        $this->equalDecimal('0', R::details(R::get('documents', $legacy['document_id']))['rate']);
+    }
+
+    public function test_opening_loan_accepts_an_explicit_zero_monthly_rate(): void
+    {
+        $draft = ['startDate' => '2026-10-25', 'accounts' => ['cash' => ['amount' => '2000000', 'checked' => true], 'home' => ['amount' => '500000', 'checked' => true]], 'own' => ['checked' => true, 'rows' => []], 'groups' => ['supplier' => true, 'buyer' => true], 'parties' => [(string) $this->trader->id => ['checked' => true, 'answers' => ['loan' => 'yes', 'stock' => 'no'], 'rows' => [], 'values' => ['loan' => '10000', 'loanInterest' => '0', 'loanRate' => '0']]]];
+        $this->runCommand('opening.draft', ['draft' => $draft]);
+        $this->runCommand('opening.approve');
+        $loan = DB::table('documents')->where('kind', 'opening_loan')->first();
+        $this->assertNotNull($loan);
+        $this->equalDecimal('0', R::details($loan)['rate']);
+        $this->equalDecimal('0', R::details($loan)['openingInterest']);
+    }
+
     public function test_loan_policy_permissions_validation_and_inactive_selection(): void
     {
         $key = (string) Str::uuid();
@@ -1106,7 +1589,7 @@ class BusinessFlowsTest extends TestCase
         $this->actingAs($this->clerk)->postJson('/api/commands', ['action' => 'master.save', 'input' => $input], ['Idempotency-Key' => $key])->assertForbidden();
         $this->postJson('/api/commands', ['action' => 'master.inactivate', 'input' => ['kind' => 'loan_policy', 'id' => $policy]], ['Idempotency-Key' => (string) Str::uuid()])->assertForbidden();
         $this->actingAs($this->owner);
-        foreach (['0', '-1', '101', 'invalid'] as $rate) {
+        foreach (['-1', '101', 'invalid', '', null] as $rate) {
             $this->postJson('/api/commands', ['action' => 'master.save', 'input' => ['kind' => 'loan_policy', 'data' => ['name' => 'Invalid', 'monthlyRate' => $rate]]], ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
         }
         $this->runCommand('master.inactivate', ['kind' => 'loan_policy', 'id' => $policy]);

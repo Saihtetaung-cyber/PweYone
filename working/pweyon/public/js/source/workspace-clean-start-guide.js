@@ -50,7 +50,7 @@
   if(!state.masters.products.length&&!state.receipts.length&&!state.sales.length){
    html=`<div class="clean-start-guide2 mb">${note('ဒေတာအလွတ်ဖြင့် စမ်းနိုင်ပါပြီ။ သတ်မှတ်ချက်တွင် ကုန်ပစ္စည်း၊ ကုန်သည်နှင့် ဝယ်သူများကို အရင်ထည့်ပါ။','blue')}<div class="mt">${btn('သတ်မှတ်ချက်များ ထည့်မယ်',"beginSetup('overview')",'secondary','settings')}</div></div>`+html;
   }
-  return html+`<div class="v2-home-footer">${btn('ဒေတာရှင်းပြီး ပြန်စမယ်','openReset()','ghost','reset')}</div>`;
+  return html+``;
  };
  if(!state.cleanStart2){
   if(persistEmpty()){
