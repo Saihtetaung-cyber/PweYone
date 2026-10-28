@@ -694,6 +694,9 @@ class BusinessFlowsTest extends TestCase
             $this->runCommand('expense.create', ['amount' => $amount, 'reason' => 'Previously omitted expense', 'account_id' => $this->cash->id], $this->clerk);
         }
         $ids = DB::table('cash_entries')->pluck('id')->all();
+        $candidates = app(OpeningCashReview::class)->candidates(DB::table('business_days')->first());
+        $this->assertCount(2, $candidates);
+        $this->assertSame(['Previously omitted expense', 'Previously omitted expense'], array_column($candidates, 'purpose'));
         $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => [$ids[0]], 'note' => 'Partial']);
         $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => [$ids[0], $ids[0]], 'note' => 'Duplicate']);
         $this->assertOpeningRejected('day.resolve', ['method' => 'link', 'entry_ids' => $ids, 'note' => '']);
@@ -705,6 +708,7 @@ class BusinessFlowsTest extends TestCase
         $check = $this->cashCheck();
         $this->assertSame('linked', $check['status']);
         $this->assertCount(2, $check['resolution']['entries']);
+        $this->assertSame(['Previously omitted expense', 'Previously omitted expense'], array_column($check['resolution']['entries'], 'purpose'));
         $this->equalDecimal('1980000', $check['actual']);
         $this->equalDecimal('-20000', $check['difference']);
         $this->equalDecimal('1980000', R::get('cash_accounts', $this->cash->id)->balance);
@@ -1403,6 +1407,41 @@ class BusinessFlowsTest extends TestCase
         $this->assertSame(0, DB::table('cash_entries')->count());
     }
 
+    public function test_projection_query_count_stays_constant_as_vouchers_and_expenses_grow(): void
+    {
+        $addRecords = function (): void {
+            $receipt = $this->receive('100');
+            $this->purchase($receipt['line_ids'][0]);
+            $this->sale('10');
+            $this->runCommand('expense.create', ['amount' => '100', 'reason' => 'Transport', 'account_id' => $this->cash->id, 'party_id' => $this->trader->id, 'recoverable' => true, 'source_document_id' => $receipt['document_id']]);
+        };
+        $queryCount = function (): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            try {
+                app(Projection::class)->forUser($this->owner);
+
+                return count(DB::getQueryLog());
+            } finally {
+                DB::disableQueryLog();
+                DB::flushQueryLog();
+            }
+        };
+
+        $addRecords();
+        $initialQueryCount = $queryCount();
+        for ($i = 0; $i < 3; $i++) {
+            $addRecords();
+        }
+
+        $this->assertSame($initialQueryCount, $queryCount(), 'Workspace projection must not query cash and charge data once per document.');
+        $state = app(Projection::class)->forUser($this->owner);
+        $this->assertCount(4, $state['receipts']);
+        $this->assertCount(4, $state['sales']);
+        $this->assertCount(4, $state['expenses']);
+        $this->assertCount(4, $state['transactions']);
+    }
+
     public function test_historical_expense_does_not_increase_unrelated_home_balance(): void
     {
         $reason = R::insert('expense_reasons', ['name' => 'Electricity']);
@@ -1410,6 +1449,26 @@ class BusinessFlowsTest extends TestCase
         $this->equalDecimal('1980000', R::get('cash_accounts', $this->cash->id)->balance);
         $this->equalDecimal('500000', R::get('cash_accounts', $this->home->id)->balance);
         $this->assertSame(0, DB::table('cash_entries')->where('account_id', $this->home->id)->count());
+    }
+
+    public function test_cash_movements_include_saved_expense_purpose_for_existing_entries(): void
+    {
+        $reason = R::insert('expense_reasons', ['name' => 'လျှပ်စစ်မီတာခ']);
+        $expense = $this->runCommand('expense.create', ['reason_id' => $reason->id, 'amount' => '20000', 'account_id' => $this->cash->id], $this->clerk);
+        $outlay = $this->runCommand('expense.create', ['reason' => 'ကားခ', 'recoverable' => true, 'party_id' => $this->trader->id, 'amount' => '5000', 'account_id' => $this->cash->id], $this->clerk);
+        R::update('expense_reasons', $reason->id, ['name' => 'Renamed master']);
+
+        foreach ([$this->owner, $this->clerk] as $actor) {
+            $transactions = collect(app(Projection::class)->forUser($actor)['transactions'])->keyBy('ref');
+            $expenseNumber = R::get('documents', $expense['document_id'])->number;
+            $outlayNumber = R::get('documents', $outlay['document_id'])->number;
+            $this->assertSame('ပွဲရုံခံ အသုံးစရိတ် · လျှပ်စစ်မီတာခ', $transactions[$expenseNumber]['title']);
+            $this->assertSame('ယာယီ စိုက်ထုတ် · ကားခ', $transactions[$outlayNumber]['title']);
+            $this->equalDecimal('-20000', $transactions[$expenseNumber]['amount']);
+        }
+
+        $this->assertSame('ပွဲရုံခံ အသုံးစရိတ်', DB::table('cash_entries')->where('document_id', $expense['document_id'])->value('title'));
+        $this->equalDecimal('1975000', R::get('cash_accounts', $this->cash->id)->balance);
     }
 
     public function test_historical_today_purchase_and_current_stock_filters_use_different_dates(): void

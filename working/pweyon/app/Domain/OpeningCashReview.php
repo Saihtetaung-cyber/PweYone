@@ -22,7 +22,7 @@ final class OpeningCashReview
             ->leftJoin('cash_entries as reversal', 'reversal.reverses_id', '=', 'e.id')
             ->where('a.code', 'cash')->whereNull('e.reverses_id')->whereNull('reversal.id')
             ->whereNotIn('d.status', ['reversed', 'voided', 'cancelled'])
-            ->select('e.*', 'd.number', 'd.source_document_id')->orderByDesc('e.id')->get()->keyBy('id');
+            ->select('e.*', 'd.number', 'd.source_document_id', 'd.kind as document_kind', 'd.note as document_note')->orderByDesc('e.id')->get()->keyBy('id');
     }
 
     public function metadata(object $day): array
@@ -105,7 +105,8 @@ final class OpeningCashReview
                 || Decimal::cmp(ltrim($entry->amount, '-'), $limit) > 0) {
                 continue;
             }
-            $out[] = $this->entrySnapshot($entry) + ['number' => $entry->number, 'reference' => $entry->source_document_id];
+            // Display metadata stays separate from the cash snapshot used to validate links.
+            $out[] = $this->entrySnapshot($entry) + ['number' => $entry->number, 'reference' => $entry->source_document_id, 'purpose' => in_array($entry->document_kind, ['expense', 'outlay'], true) ? (string) $entry->document_note : ''];
         }
 
         return $out;

@@ -21,16 +21,15 @@ function deductionItemLabel(code,custom=''){
 function deductionStageLabel(stage){return deductionStageChoices.find(x=>x[0]===stage)?.[1]||'ကုန်လက်ခံ / အဝယ်ချိန်';}
 function ensureDeductionRateMastersV43(){
  ensureDeductionRateMasters();
- let changed=false;
  state.masters.purchaseDeductionRates.forEach(r=>{
-  if(!r.itemType){r.itemType=r.kind==='labor'?'labor':'service';changed=true;}
-  if(!r.applyAt){r.applyAt='purchase';changed=true;}
-  if((r.itemType==='other'||r.itemType==='custom')&&!r.customType){r.customType=r.name||'စိတ်ကြိုက် နုတ်ငွေ';changed=true;}
-  if(r.itemType==='other'){r.itemType='custom';changed=true;}
+  if(!r.itemType){r.itemType=r.kind==='labor'?'labor':'service';}
+  if(!r.applyAt){r.applyAt='purchase';}
+  if((r.itemType==='other'||r.itemType==='custom')&&!r.customType){r.customType=r.name||'စိတ်ကြိုက် နုတ်ငွေ';}
+  if(r.itemType==='other'){r.itemType='custom';}
   /* keep old kind for transaction compatibility */
   r.kind=r.itemType==='labor'?'labor':'service';
  });
- if(changed)save();
+ // Display compatibility only: rendering server masters must not issue a write.
 }
 const _deductionRateByIdV43=deductionRateById;
 deductionRateById=function(id){ensureDeductionRateMastersV43();return state.masters.purchaseDeductionRates.find(r=>r.id===id);};

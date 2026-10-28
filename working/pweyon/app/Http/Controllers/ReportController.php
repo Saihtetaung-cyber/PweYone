@@ -4,17 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Domain\Reports;
 use App\Http\WorkspaceAccess;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class ReportController extends Controller
 {
-    public function __invoke(Request $r, string $kind, Reports $reports, WorkspaceAccess $access)
+    public function __invoke(Request $request, string $kind, Reports $reports, WorkspaceAccess $access): JsonResponse
     {
-        $v = $r->validate(['from' => ['required', 'date_format:Y-m-d'], 'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'], 'party_id' => ['nullable', 'integer'], 'warehouse_id' => ['nullable', 'integer'], 'owner' => ['nullable', 'in:owned,supplier,customer']]);
-        $actor = $access->actor($r);
+        $validated = $request->validate([
+            'from' => ['required', 'date_format:Y-m-d'],
+            'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'party_id' => ['nullable', 'integer'],
+            'warehouse_id' => ['nullable', 'integer'],
+            'owner' => ['nullable', 'in:owned,supplier,customer'],
+        ]);
+        $actor = $access->actor($request);
+        $from = $validated['from'];
+        $to = $validated['to'];
         $data = match ($kind) {
-            'overview' => $reports->overview($actor, $v['from'], $v['to']),
-            'profit' => $reports->profit($actor, $v['from'], $v['to']),'stock' => $reports->stock($actor, $v['from'], $v['to'], isset($v['warehouse_id']) ? (int) $v['warehouse_id'] : null, $v['owner'] ?? null),'statement' => $reports->statement($actor, (int) ($v['party_id'] ?? 0), $v['from'], $v['to']),default => abort(404)
+            'overview' => $reports->overview($actor, $from, $to),
+            'profit' => $reports->profit($actor, $from, $to),
+            'stock' => $reports->stock($actor, $from, $to, isset($validated['warehouse_id']) ? (int) $validated['warehouse_id'] : null, $validated['owner'] ?? null),
+            'statement' => $reports->statement($actor, (int) ($validated['party_id'] ?? 0), $from, $to),
+            default => abort(404),
         };
 
         return response()->json($data)->header('Cache-Control', 'no-store');

@@ -11,29 +11,29 @@
   return 'manual';
  }
  function migrate48(){
-  ensureDeductionRateMastersV43();let changed=false;
+  ensureDeductionRateMastersV43();
   state.masters.purchaseDeductionRates.forEach(r=>{
    const oldLabel=deductionName48(r);
-   if(!r.displayName){r.displayName=oldLabel;changed=true;}
+   if(!r.displayName){r.displayName=oldLabel;}
    const mode=r.calcMode||((r.itemType==='service'&&oldLabel==='ဝန်ဆောင်ခ')?'service_percent':(r.itemType==='labor'?'labor_auto':'manual'));
-   if(r.calcMode!==mode){r.calcMode=mode;changed=true;}
+   if(r.calcMode!==mode){r.calcMode=mode;}
    if(mode==='service_percent'){
-    if(r.itemType!=='service'){r.itemType='service';changed=true;}
-    if(r.basis!=='percent_total'){r.basis='percent_total';changed=true;}
+    if(r.itemType!=='service'){r.itemType='service';}
+    if(r.basis!=='percent_total'){r.basis='percent_total';}
     r.kind='service';
    }else if(mode==='labor_auto'){
-    if(r.itemType!=='labor'){r.itemType='labor';changed=true;}
-    if(r.basis!=='labor_auto'){r.basis='labor_auto';changed=true;}
+    if(r.itemType!=='labor'){r.itemType='labor';}
+    if(r.basis!=='labor_auto'){r.basis='labor_auto';}
     r.kind='labor';
    }else{
-    if(r.itemType!=='custom'){r.itemType='custom';changed=true;}
-    if(r.customType!==r.displayName){r.customType=r.displayName;changed=true;}
-    if(r.basis!=='manual'){r.basis='manual';changed=true;}
-    if(Number(r.rate)!==0){r.rate=0;changed=true;}
+    if(r.itemType!=='custom'){r.itemType='custom';}
+    if(r.customType!==r.displayName){r.customType=r.displayName;}
+    if(r.basis!=='manual'){r.basis='manual';}
+    if(Number(r.rate)!==0){r.rate=0;}
     r.kind='service';
    }
   });
-  if(changed)save();
+  // Display compatibility only: persist edits through the server master command.
  }
  const init48=initV4;
  initV4=function(){init48();migrate48();};

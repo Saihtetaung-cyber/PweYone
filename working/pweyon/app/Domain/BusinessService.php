@@ -16,6 +16,33 @@ use Illuminate\Validation\ValidationException;
  */
 final class BusinessService
 {
+    private const MASTER_TABLES = [
+        'product' => 'products',
+        'partner' => 'partners',
+        'account' => 'cash_accounts',
+        'warehouse' => 'warehouses',
+        'package' => 'package_types',
+        'adjustment' => 'adjustment_rates',
+        'service_rate' => 'adjustment_rates',
+        'labor' => 'labor_rates',
+        'expense_reason' => 'expense_reasons',
+        'funding_category' => 'funding_categories',
+        'loan_policy' => 'loan_interest_policies',
+    ];
+
+    private const OWNER_MASTER_KINDS = ['account', 'funding_category', 'loan_policy'];
+
+    private const OWNER_ACTIONS = [
+        'day.review', 'day.resolve', 'stock.check.approve', 'stock.check.reject',
+        'loan.create', 'cash.fund', 'cash.reverse', 'opening.approve', 'opening.reopen',
+    ];
+
+    private const ACTIONS_WITHOUT_OPENING_CHECK = [
+        'opening.import', 'day.review', 'day.resolve', 'master.save', 'master.inactivate',
+        'opening.draft', 'opening.approve', 'day.open', 'day.next', 'stock.check.approve',
+        'stock.check.reject', 'prices.save', 'note.save', 'note.delete',
+    ];
+
     private User $actor;
 
     private object $day;
@@ -24,10 +51,7 @@ final class BusinessService
     {
         abort_unless($actor->active, 403);
         R::require(Str::isUuid($key), 'A UUID Idempotency-Key is required.');
-        $ownerOnly = in_array($action, ['day.review', 'day.resolve', 'stock.check.approve', 'stock.check.reject', 'loan.create', 'cash.fund', 'cash.reverse', 'opening.approve', 'opening.reopen'], true)
-            || (in_array($action, ['master.save', 'master.inactivate'], true) && in_array($input['kind'] ?? '', ['account', 'funding_category', 'loan_policy'], true))
-            || ($action === 'request.create' && ($input['kind'] ?? 'home') === 'home');
-        abort_unless(! $ownerOnly || $actor->role === 'owner', 403, 'Owner permission is required.');
+        $this->authorizeAction($actor, $action, $input);
         $hash = hash('sha256', json_encode([$action, $input], JSON_THROW_ON_ERROR));
 
         return DB::transaction(function () use ($actor, $action, $input, $key, $hash) {
@@ -44,15 +68,8 @@ final class BusinessService
             $this->actor = $actor;
             $this->day = DB::table('business_days')->orderByDesc('business_date')->first();
             R::require((bool) $this->day, 'Business day is not initialized.');
-            if (isset($input['payment_amount'])) {
-                $requested = $this->amount($input, 'payment_amount');
-                $splitTotal = '0';
-                foreach ($input['payments'] ?? [] as $split) {
-                    $splitTotal = D::add($splitTotal, $this->amount($split, 'amount'));
-                }
-                R::require(D::cmp($requested, $splitTotal) === 0, 'Payment splits must equal the entered payment amount.');
-            }
-            if (! in_array($action, ['opening.import', 'day.review', 'day.resolve', 'master.save', 'master.inactivate', 'opening.draft', 'opening.approve', 'day.open', 'day.next', 'stock.check.approve', 'stock.check.reject', 'prices.save', 'note.save', 'note.delete'], true)) {
+            $this->validatePaymentSplits($input);
+            if (! in_array($action, self::ACTIONS_WITHOUT_OPENING_CHECK, true)) {
                 R::require($this->day->status === 'open', 'This business day is closed.');
                 R::require((bool) $this->day->opening_checked, 'Complete the opening cash check first.');
             }
@@ -108,6 +125,35 @@ final class BusinessService
     private function owner(): void
     {
         abort_unless($this->actor->role === 'owner', 403, 'Owner permission is required.');
+    }
+
+    private function authorizeAction(User $actor, string $action, array $input): void
+    {
+        $ownerOnly = in_array($action, self::OWNER_ACTIONS, true)
+            || (in_array($action, ['master.save', 'master.inactivate'], true) && in_array($input['kind'] ?? '', self::OWNER_MASTER_KINDS, true))
+            || ($action === 'request.create' && ($input['kind'] ?? 'home') === 'home');
+        abort_unless(! $ownerOnly || $actor->role === 'owner', 403, 'Owner permission is required.');
+    }
+
+    private function validatePaymentSplits(array $input): void
+    {
+        if (! isset($input['payment_amount'])) {
+            return;
+        }
+
+        $requested = $this->amount($input, 'payment_amount');
+        $splitTotal = '0';
+        foreach ($input['payments'] ?? [] as $split) {
+            $splitTotal = D::add($splitTotal, $this->amount($split, 'amount'));
+        }
+        R::require(D::cmp($requested, $splitTotal) === 0, 'Payment splits must equal the entered payment amount.');
+    }
+
+    private function masterTable(mixed $kind): string
+    {
+        R::require(is_string($kind) && isset(self::MASTER_TABLES[$kind]), 'Invalid master type.');
+
+        return self::MASTER_TABLES[$kind];
     }
 
     private function amount(array $in, string $key, bool $positive = false, int $scale = 2): string
@@ -188,11 +234,8 @@ final class BusinessService
         $kind = $in['kind'] ?? '';
         $data = $in['data'] ?? [];
         $id = $in['id'] ?? null;
-        $table = match ($kind) {
-            'product' => 'products','partner' => 'partners','account' => 'cash_accounts','warehouse' => 'warehouses','package' => 'package_types','adjustment', 'service_rate' => 'adjustment_rates','labor' => 'labor_rates','expense_reason' => 'expense_reasons','funding_category' => 'funding_categories','loan_policy' => 'loan_interest_policies',default => null
-        };
-        R::require((bool) $table, 'Invalid master type.');
-        if (in_array($kind, ['account', 'funding_category', 'loan_policy'], true)) {
+        $table = $this->masterTable($kind);
+        if (in_array($kind, self::OWNER_MASTER_KINDS, true)) {
             $this->owner();
         }
         $old = $id ? R::get($table, $id) : null;
@@ -279,13 +322,10 @@ final class BusinessService
     private function inactivate(array $in): array
     {
         $kind = $in['kind'] ?? '';
-        if (in_array($kind, ['account', 'funding_category', 'loan_policy'], true)) {
+        if (in_array($kind, self::OWNER_MASTER_KINDS, true)) {
             $this->owner();
         }
-        $table = match ($kind) {
-            'product' => 'products','partner' => 'partners','account' => 'cash_accounts','warehouse' => 'warehouses','package' => 'package_types','adjustment', 'service_rate' => 'adjustment_rates','labor' => 'labor_rates','expense_reason' => 'expense_reasons','funding_category' => 'funding_categories','loan_policy' => 'loan_interest_policies',default => null
-        };
-        R::require((bool) $table, 'Invalid master type.');
+        $table = $this->masterTable($kind);
         $r = R::get($table, $in['id'] ?? null);
         if (in_array($kind, ['adjustment', 'service_rate'], true)) {
             R::require(($r->calc_mode === 'service_percent') === ($kind === 'service_rate'), 'Use the matching rate settings.');

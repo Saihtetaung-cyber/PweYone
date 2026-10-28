@@ -5,6 +5,7 @@ namespace App\Domain;
 use App\Domain\Decimal as D;
 use App\Domain\Records as R;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /** Read model preserves the confirmed interface vocabulary; no write accepts this shape. */
@@ -66,6 +67,13 @@ final class Projection
         $payments = DB::table('payments')->get();
         $events = DB::table('stock_events')->orderBy('id')->get();
         $recoveries = DB::table('recoveries')->get();
+        $cashEntries = DB::table('cash_entries')->orderBy('id')->get();
+        $cashEntriesByDocument = $cashEntries->groupBy('document_id');
+        $recoveriesByTarget = $recoveries->groupBy('target_document_id');
+        $offsetPaymentsBySource = $payments->where('mode', 'offset')->groupBy('source_document_id');
+        $chargesByDocument = $docs->whereIn('kind', ['purchase', 'sale', 'settlement'])->map(
+            fn ($doc) => $this->sourceCharges($doc, $recoveriesByTarget->get($doc->id, collect()), $offsetPaymentsBySource->get($doc->id, collect()))
+        );
         $s['__ids'] = ['accounts' => $visible->mapWithKeys(fn ($a) => [$a->code => $a->id])->all()];
         $s['masters']['products'] = $products->map(fn ($p) => ['id' => (string) $p->id, 'name' => $p->name, 'standardViss' => $p->standard_viss, 'standardWeight' => $p->standard_viss, 'grades' => json_decode($p->grades, true), 'active' => (bool) $p->active, 'revision' => 1])->values()->all();
         $s['masters']['partners'] = $parties->map(fn ($p) => ['id' => (string) $p->id, 'name' => $p->name, 'locality' => $p->locality, 'phone' => $p->phone, 'kind' => $p->kind, 'type' => R::details($p)['type'] ?? ($p->kind === 'buyer' ? 'buyer' : 'trader'), 'active' => (bool) $p->active])->values()->all();
@@ -111,7 +119,7 @@ final class Projection
                 $sold = D::sum($lines->filter(fn ($l) => $l->source_line_id === $line->id && ($docs[$l->document_id]->kind ?? '') === 'sale')->pluck('quantity'));
                 $r = ['id' => (string) $line->id, 'backendDocumentId' => $doc->id, 'purchaseDocumentId' => $purchase?->id, 'no' => $doc->number.' / '.$line->id, 'voucherNo' => $doc->number, 'date' => $doc->business_date, 'partnerId' => (string) $doc->party_id, 'name' => $name, 'type' => R::details($party)['type'] ?? 'trader', 'product' => $products[$line->product_id]->name, 'productId' => (string) $line->product_id, 'grade' => $line->grade, 'qty' => $buy?->quantity ?? $line->quantity ?? '0', 'weightKnown' => $line->quantity !== null, 'bags' => $line->bags ?? '0', 'actualBags' => $line->bags, 'rawBags' => ($extra['bagType'] ?? 'raw') === 'raw' ? $line->bags ?? '0' : '0', 'bagType' => $extra['bagType'] ?? 'raw', 'packageViss' => $extra['packageViss'] ?? '0', 'packageCount' => ($extra['bagType'] ?? '') === 'finished' ? $line->bags ?? '0' : '0', 'warehouse' => (string) $line->warehouse_id, 'status' => $buy ? 'purchased' : 'await', 'price' => $buy?->price, 'priceBasis' => $buy?->price_basis, 'net4' => $buy?->net, 'backendGross' => $buy?->gross, 'advance' => 0, 'wage' => 0, 'weigh' => 0, 'paid' => $buy?->paid ?? '0', 'payments' => $purchase ? $paymentRows($purchase->id, $buy->id) : [], 'note' => $doc->note ?? '', 'car' => $doc->vehicle ?? '', 'v4' => true];
                 if ($buy) {
-                    $r += ['purchaseDate' => $purchase->business_date, 'purchaseNo' => $purchase->number, 'purchaseBagViss47' => R::details($buy)['purchaseBagViss'] ?? null, 'standardBagViss47' => $products[$line->product_id]->standard_viss ?? '0', 'purchaseBagCount55' => R::details($buy)['purchaseBags'] ?? null, 'charges4' => $this->sourceCharges($purchase)];
+                    $r += ['purchaseDate' => $purchase->business_date, 'purchaseNo' => $purchase->number, 'purchaseBagViss47' => R::details($buy)['purchaseBagViss'] ?? null, 'standardBagViss47' => $products[$line->product_id]->standard_viss ?? '0', 'purchaseBagCount55' => R::details($buy)['purchaseBags'] ?? null, 'charges4' => $chargesByDocument[$purchase->id]];
                     if (D::cmp($sold, '0') > 0) {
                         $r['remainingPurchase2'] = ['schema' => 1, 'qty' => $buy->quantity, 'soldQty' => $sold, 'original' => ['qty' => $line->quantity, 'bags' => $line->bags, 'weightKnown' => $line->quantity !== null], 'sourceSaleIds' => $lines->filter(fn ($l) => $l->source_line_id === $line->id && $docs[$l->document_id]->kind === 'sale')->map(fn ($l) => (string) $l->id)->values()->all()];
                     }
@@ -121,7 +129,7 @@ final class Projection
                 }
                 $outlay = $docs->first(fn ($d) => $d->kind === 'outlay' && $d->source_document_id === $doc->id && $d->status !== 'reversed');
                 if ($outlay && $line->id === $lines->firstWhere('document_id', $doc->id)?->id) {
-                    $entry = DB::table('cash_entries')->where('document_id', $outlay->id)->orderByDesc('id')->first();
+                    $entry = $cashEntriesByDocument->get($outlay->id)?->last();
                     $r['carriageAdvance'] = $outlay->net;
                     $r['carriageExpenseId'] = (string) $outlay->id;
                     $r['carriageAccount'] = $entry && $visible->has($entry->account_id) ? $accounts[$entry->account_id]->code : '';
@@ -134,7 +142,7 @@ final class Projection
             if ($doc->kind === 'sale') {
                 $dispatches = $events->filter(fn ($e) => $e->kind === 'dispatch' && (R::details($e)['saleLineId'] ?? null) === $line->id)->map(fn ($e) => ['id' => (string) $e->id, 'date' => $e->business_date, 'qty' => $e->quantity, 'bags' => $e->bags, 'warehouse' => (string) $lots[$e->lot_id]->warehouse_id, 'recordedAt' => $e->created_at, 'car' => R::details($e)['vehicle'] ?? '', 'collector' => R::details($e)['collector'] ?? ''])->values()->all();
                 $source = $line->source_line_id ? $lines[$line->source_line_id] : null;
-                $r = ['id' => (string) $line->id, 'backendDocumentId' => $doc->id, 'no' => $doc->number.' / '.$line->id, 'voucherNo' => $doc->number, 'date' => $doc->business_date, 'buyerId' => (string) $doc->party_id, 'name' => $name, 'product' => $products[$line->product_id]->name, 'grade' => $line->grade, 'qty' => $line->quantity, 'bags' => $line->bags ?? '0', 'packageCount' => $line->bags ?? '0', 'packageViss' => $extra['packageViss'] ?? '0', 'buyerBagViss46' => $extra['packageViss'] ?? '0', 'standardBagViss46' => $products[$line->product_id]->standard_viss ?? '0', 'price' => $line->price, 'priceBasis' => $line->price_basis, 'total' => $line->net, 'grossTotal' => $line->gross, 'cost' => D::mul($line->quantity, $extra['unitCost'] ?? '0'), 'paid' => $line->paid, 'payments' => $paymentRows($doc->id, $line->id), 'mode' => $details['delivery'] ?? 'hold', 'deliveredQty' => $line->dispatched, 'deliveredBags' => $line->bags && D::cmp($line->quantity, '0') > 0 ? D::div(D::mul($line->bags, $line->dispatched), $line->quantity) : '0', 'dispatches' => $dispatches, 'warehouse' => (string) $line->warehouse_id, 'batch' => $extra['batch'] ?? '', 'sourceLot' => $extra['sourceLot'] ?? '', 'sourceOwner' => $line->ownership, 'sourceSupplierId' => $line->ownership === 'supplier' ? ($extra['sourceSupplierId'] ?? '') : '', 'sourceSupplierName' => $parties[$extra['sourceSupplierId'] ?? '']->name ?? '', 'originPartnerId' => $extra['sourceSupplierId'] ?? '', 'sourceReceiptId' => $source ? (string) $source->id : '', 'sourceReceiptNo' => $source ? $docs[$source->document_id]->number : '', 'charges4' => $this->sourceCharges($doc), 'v4' => true];
+                $r = ['id' => (string) $line->id, 'backendDocumentId' => $doc->id, 'no' => $doc->number.' / '.$line->id, 'voucherNo' => $doc->number, 'date' => $doc->business_date, 'buyerId' => (string) $doc->party_id, 'name' => $name, 'product' => $products[$line->product_id]->name, 'grade' => $line->grade, 'qty' => $line->quantity, 'bags' => $line->bags ?? '0', 'packageCount' => $line->bags ?? '0', 'packageViss' => $extra['packageViss'] ?? '0', 'buyerBagViss46' => $extra['packageViss'] ?? '0', 'standardBagViss46' => $products[$line->product_id]->standard_viss ?? '0', 'price' => $line->price, 'priceBasis' => $line->price_basis, 'total' => $line->net, 'grossTotal' => $line->gross, 'cost' => D::mul($line->quantity, $extra['unitCost'] ?? '0'), 'paid' => $line->paid, 'payments' => $paymentRows($doc->id, $line->id), 'mode' => $details['delivery'] ?? 'hold', 'deliveredQty' => $line->dispatched, 'deliveredBags' => $line->bags && D::cmp($line->quantity, '0') > 0 ? D::div(D::mul($line->bags, $line->dispatched), $line->quantity) : '0', 'dispatches' => $dispatches, 'warehouse' => (string) $line->warehouse_id, 'batch' => $extra['batch'] ?? '', 'sourceLot' => $extra['sourceLot'] ?? '', 'sourceOwner' => $line->ownership, 'sourceSupplierId' => $line->ownership === 'supplier' ? ($extra['sourceSupplierId'] ?? '') : '', 'sourceSupplierName' => $parties[$extra['sourceSupplierId'] ?? '']->name ?? '', 'originPartnerId' => $extra['sourceSupplierId'] ?? '', 'sourceReceiptId' => $source ? (string) $source->id : '', 'sourceReceiptNo' => $source ? $docs[$source->document_id]->number : '', 'charges4' => $chargesByDocument[$doc->id], 'v4' => true];
                 $s['sales'][] = $r;
             }
         }
@@ -160,7 +168,16 @@ final class Projection
             }
         }
         unset($lot);
-        $s['transactions'] = DB::table('cash_entries')->whereIn('account_id', $visible->keys())->orderBy('id')->get()->map(fn ($e) => ['id' => (string) $e->id, 'date' => $e->business_date, 'account' => $accounts[$e->account_id]->code, 'amount' => $e->amount, 'title' => $e->title, 'ref' => $docs[$e->document_id]->number, 'party' => $parties[$docs[$e->document_id]->party_id]->name ?? '', 'time' => date('H:i', strtotime($e->created_at))])->all();
+        $s['transactions'] = $cashEntries->whereIn('account_id', $visible->keys())->values()->map(function ($e) use ($accounts, $docs, $parties) {
+            $doc = $docs[$e->document_id];
+            $title = $e->title;
+            // Show the saved expense purpose for historical entries as well as new ones.
+            if (in_array($doc->kind, ['expense', 'outlay'], true) && trim((string) $doc->note) !== '') {
+                $title .= ' · '.$doc->note;
+            }
+
+            return ['id' => (string) $e->id, 'date' => $e->business_date, 'account' => $accounts[$e->account_id]->code, 'amount' => $e->amount, 'title' => $title, 'ref' => $doc->number, 'party' => $parties[$doc->party_id]->name ?? '', 'time' => date('H:i', strtotime($e->created_at))];
+        })->all();
         $s['partnerAdvances'] = [];
         $s['supplierLoans38'] = [];
         $s['expenses'] = [];
@@ -180,7 +197,7 @@ final class Projection
                 $s['supplierLoans38'][] = ['id' => (string) $doc->id, 'partnerId' => (string) $doc->party_id, 'name' => $party?->name ?? '', 'date' => $doc->business_date, 'amount' => $doc->net, 'rate' => $x['rate'] ?? '0', 'openingInterest69' => $x['openingInterest'] ?? '0', 'note' => $doc->note, 'payments' => $paymentRows($doc->id)];
             }
             if (in_array($doc->kind, ['expense', 'outlay'], true)) {
-                $entry = DB::table('cash_entries')->where('document_id', $doc->id)->first();
+                $entry = $cashEntriesByDocument->get($doc->id)?->first();
                 if (! $entry || ! $visible->has($entry->account_id)) {
                     continue;
                 }$s['expenses'][] = ['id' => (string) $doc->id, 'date' => $doc->business_date, 'amount' => $doc->net, 'reason' => $doc->note, 'title' => $doc->note, 'account' => $accounts[$entry->account_id]->code, 'partnerId' => (string) ($doc->party_id ?? ''), 'receiptId' => $lines->firstWhere('document_id', $doc->source_document_id)?->id, 'sourceDocumentId' => $doc->source_document_id !== null ? (string) $doc->source_document_id : null, 'recoverable' => $doc->kind === 'outlay', 'recovered' => D::cmp(D::sum($recoveries->where('source_document_id', $doc->id)->pluck('amount')), $doc->net) >= 0, 'settlementRecoveries74' => $recoveries->where('source_document_id', $doc->id)->map(fn ($r) => ['amount' => $r->amount])->values()->all(), 'paymentPending' => false];
@@ -195,7 +212,7 @@ final class Projection
                 $s['cashIns50'][] = ['id' => (string) $doc->id, 'ref' => $doc->number, 'date' => $doc->business_date, 'type' => $doc->kind === 'funding' ? 'external' : 'transfer', 'source' => $accounts[$x['source'] ?? '']->code ?? null, 'destination' => $accounts[$x['destination'] ?? '']->code ?? null, 'amount' => $doc->net, 'coaId' => $x['coaId'] ?? 'COA50-CAPITAL', 'description' => $x['description'] ?? '', 'reference' => $x['reference'] ?? '', 'status' => $doc->status, 'createdAt' => $doc->created_at];
             }
             if ($doc->kind === 'settlement') {
-                $charges = $this->sourceCharges($doc);
+                $charges = $chargesByDocument[$doc->id];
                 $s['traderSettlements74'][] = ['id' => (string) $doc->id, 'no' => $doc->number, 'sourceKey' => json_encode([$docs[$doc->source_document_id]->number, (string) $doc->party_id], JSON_UNESCAPED_UNICODE), 'partnerId' => (string) $doc->party_id, 'saleVoucher' => $docs[$doc->source_document_id]->number, 'saleIds' => $x['saleIds'] ?? [], 'date' => $doc->business_date, 'gross' => $doc->gross, 'status' => $doc->status, 'confirmedDate' => $x['confirmedDate'] ?? $doc->business_date, 'charges' => ['mode' => 'yes', 'service' => $charges['serviceFee'], 'rate' => $charges['serviceRateValue'], 'labor' => $charges['labor'], 'others' => $charges['dynamicRows'], 'advance' => $charges['advance'], 'recoveries' => $charges['recoveryRows'] ?? [], 'loanPayments38' => $charges['loanPayments38'], 'loanTotal38' => $charges['loanTotal38']], 'payments' => array_map(fn ($p) => $p + ['no' => 'PAY-'.$p['id'], 'splits' => [['account' => $p['account'], 'amount' => $p['amount']]]], $paymentRows($doc->id)), 'changes' => [], 'serverNet' => $doc->net, 'serverPaid' => $doc->paid];
             }
             if ($doc->kind === 'opening') {
@@ -304,13 +321,11 @@ final class Projection
         return $s;
     }
 
-    private function sourceCharges(object $doc): array
+    private function sourceCharges(object $doc, Collection $recoveries, Collection $loanPayments): array
     {
         $charges = R::details($doc)['charges'] ?? [];
-        $recoveries = DB::table('recoveries')->where('target_document_id', $doc->id)->get();
         $advance = D::sum($recoveries->whereIn('kind', ['advance', 'opening_advance'])->pluck('amount'));
         $outlay = $recoveries->where('kind', 'outlay');
-        $loanPayments = DB::table('payments')->where('source_document_id', $doc->id)->where('mode', 'offset')->get();
         $loanTotal = D::sum($loanPayments->pluck('amount'));
         $items = $charges['items'] ?? [];
         $service = '0';
