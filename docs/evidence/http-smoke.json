@@ -1,7 +1,0 @@
-{
-  "url": "http://127.0.0.1:8000/login",
-  "status": 200,
-  "form": true,
-  "csrfField": true,
-  "description": "Anonymous login HTTP smoke check; existing owner account preserved."
-}

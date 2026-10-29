@@ -1,8 +1,0 @@
-{
-  "passed": true,
-  "results": [
-    "1440px: newest-first, 30/30/5 navigation, button focus, responsive controls, asynchronous list refresh and print pagination rules passed; existing app print output uses separate markup",
-    "390px: newest-first, 30/30/5 navigation, button focus, responsive controls, asynchronous list refresh and print pagination rules passed; existing app print output uses separate markup"
-  ],
-  "errors": []
-}

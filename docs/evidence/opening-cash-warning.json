@@ -1,7 +1,0 @@
-{
-  "checks": [
-    "Staff and owner cash pages show pending/reviewed discrepancies, hide linked/recounted ones, and show invalidated evidence again without altering original amounts",
-    "Matched zero difference shows no warning"
-  ],
-  "errors": []
-}

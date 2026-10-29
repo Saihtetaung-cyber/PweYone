@@ -1,0 +1,6 @@
+
+/* Sales opening-cash guidance. */
+#saleDemoGuide44{border:1px solid #cddff0;background:#f3f8fe;border-radius:13px;padding:16px 19px;margin:0 0 18px;font-size:14px;line-height:1.9;color:#335978}
+#saleDemoGuide44.demo-warn{border-color:#e8dbbf;background:#fff9ed;color:#80622d}
+#saleDemoGuide44 .row{justify-content:space-between;gap:12px;flex-wrap:wrap}
+#saleDemoGuide44 strong{font-size:15px;color:var(--ink)}

@@ -1,8 +1,0 @@
-{
-  "passed": true,
-  "results": [
-    "Desktop/mobile multi-line voucher autofills one editable 20000 carriage field; decimal 12345.67 deducts once, net totals 1187654.33, original outlay stays 20000 with 7654.33 outstanding, and no second cash movement occurs",
-    "Next receipt uses only its own 30000 outlay; choosing zero persists without automatically recovering that outlay or a previous receipt balance"
-  ],
-  "errors": []
-}

@@ -1,9 +1,0 @@
-{
-  "errors": [],
-  "checks": [
-    "owner Today purchase card",
-    "snapshot pricing standard",
-    "current stock under Today",
-    "receipt search filtering"
-  ]
-}

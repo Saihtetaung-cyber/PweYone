@@ -1,11 +1,11 @@
 PweYon — Frontend / Backend ချိတ်ဆက်ပုံနှင့် Code Flow
 ====================================================
 ရေးသားသည့်နေ့: ၂၀၂၆ အောက်တိုဘာ ၂၆
-Project folder: D:\Pwal Yone
-လက်ရှိ Application folder: D:\Pwal Yone\working\pweyon
+Project folder: D:\Pwal Yone\pweyon
+လက်ရှိ Application folder: D:\Pwal Yone\pweyon\.
 
 ဤဖိုင်သည် လက်ရှိ source code ကိုဖတ်ပြီး ရှင်းပြထားခြင်းဖြစ်သည်။
-အောက်ပါ relative path များသည် working/pweyon/ အောက်မှ စတွက်ထားသည်။
+အောက်ပါ relative path များသည်  အောက်မှ စတွက်ထားသည်။
 တကယ့် email၊ password၊ database user password တို့ကို ဤဖိုင်တွင် မထည့်ထားပါ။
 
 ၁။ စနစ်တစ်ခုလုံး၏ အဓိကဖွဲ့စည်းပုံ
@@ -547,7 +547,7 @@ Backend regression tests:
   သီးခြား pweyon_test database ဖြင့် စမ်းသည်။ Application pweyon နှင့် ခွဲထားသည်။
 
 Browser integration test:
-  D:\Pwal Yone\development\tools\test-browser.cjs
+  D:\Pwal Yone\pweyon\development\tools\test-browser.cjs
   ယာယီ owner/clerk account ဖြင့် login၊ write၊ reload၊ view/password ပြောင်းပုံကို စမ်းသည်။
 
 နောက်ဆုံး သီးခြား settings ပြင်ဆင်မှုအတွက်:
