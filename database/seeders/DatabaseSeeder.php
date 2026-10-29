@@ -17,8 +17,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         app(AccountRecovery::class)->restore();
+        $this->call(DefaultAccountSeeder::class);
         if (config('workspace.auto_initialize') && Artisan::call('pweyon:install', ['--if-needed' => true]) !== 0) {
             throw new \RuntimeException('Workspace initialization failed while seeding.');
         }
+        app(AccountRecovery::class)->backup();
     }
 }

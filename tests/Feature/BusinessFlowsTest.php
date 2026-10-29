@@ -1046,6 +1046,43 @@ class BusinessFlowsTest extends TestCase
         $this->assertTrue((bool) R::get('adjustment_rates', $manual)->active);
     }
 
+    public function test_default_account_seeding_supports_login_and_separate_owner_entry_without_resetting_passwords(): void
+    {
+        $this->seed();
+        $defaultOwner = User::where('email', 'owner@pweyon.local')->firstOrFail();
+        $this->assertSame('owner', $defaultOwner->role);
+        $this->assertTrue($defaultOwner->active);
+        $this->assertTrue(Hash::check('Pweyon@123456', $defaultOwner->password));
+        $this->assertTrue(Hash::check('Owner@123456', $defaultOwner->owner_view_password));
+
+        $this->post('/login', ['email' => 'owner@pweyon.local', 'password' => 'Pweyon@123456'])->assertRedirect('/');
+        $this->assertAuthenticatedAs($defaultOwner);
+        $this->postJson('/api/workspace/view', ['view' => 'owner', 'password' => 'Pweyon@123456'])->assertUnprocessable();
+        $this->postJson('/api/workspace/view', ['view' => 'owner', 'password' => 'Owner@123456'])->assertOk();
+        $defaultOwner->password = 'Changed-login!123';
+        $defaultOwner->owner_view_password = 'Changed-owner!123';
+        $defaultOwner->save();
+        $credentials = $defaultOwner->fresh()->only(['password', 'owner_view_password']);
+        $this->seed();
+
+        $this->assertSame($credentials, $defaultOwner->fresh()->only(['password', 'owner_view_password']));
+        $this->assertSame(3, User::count());
+        $this->assertTrue($this->owner->fresh()->active);
+    }
+
+    public function test_default_account_seeding_does_not_promote_or_reset_an_existing_matching_account(): void
+    {
+        $this->clerk->email = 'owner@pweyon.local';
+        $this->clerk->active = false;
+        $this->clerk->save();
+        $before = $this->clerk->fresh()->getAttributes();
+
+        $this->seed();
+
+        $this->assertSame($before, $this->clerk->fresh()->getAttributes());
+        $this->assertSame(2, User::count());
+    }
+
     public function test_login_requires_real_credentials_and_api_requires_session(): void
     {
         $this->get('/')->assertRedirect('/login');

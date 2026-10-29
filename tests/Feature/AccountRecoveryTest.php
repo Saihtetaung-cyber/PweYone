@@ -69,7 +69,8 @@ class AccountRecoveryTest extends TestCase
             $this->assertSame(0, DB::table('labor_rates')->count());
             $this->assertSame($day, DB::table('business_days')->value('business_date'));
             $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
-            $this->assertSame(2, User::count());
+            $this->assertSame(3, User::count());
+            $this->assertTrue(User::where('email', 'owner@pweyon.local')->exists());
             $this->assertSame(0, DB::table('labor_rates')->count());
             $this->post('/logout')->assertRedirect('/login');
             $this->post('/login', ['email' => 'updated@example.test', 'password' => 'Updated-login!123'])->assertRedirect('/');
@@ -78,7 +79,7 @@ class AccountRecoveryTest extends TestCase
             $this->artisan('migrate:fresh', ['--seed' => true, '--force' => true])->assertSuccessful();
             $this->assertSame('updated@example.test', User::findOrFail($owner->id)->email);
             $this->assertTrue(Hash::check('Updated-owner!123', User::findOrFail($owner->id)->owner_view_password));
-            $this->assertSame(2, User::count());
+            $this->assertSame(3, User::count());
             $this->assertSame(1, DB::table('operation_locks')->where('name', 'workspace')->count());
             $this->assertSame(1, DB::table('business_days')->count());
         } finally {
