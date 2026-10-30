@@ -149,7 +149,7 @@ function activity(text){state.activity.unshift({id:uid('A'),text,date:today(),ti
 function move(product,grade,qty,bags,direction,ref){state.moves.push({product,grade,qty,bags,direction,ref,date:today()});}
 function receiptStatus(r){
  if(r.status==='draft')return pill('အကြမ်းမှတ်ထား','gray');
- if(r.status==='await')return pill('ဈေးစောင့်နေသည်','amber');
+ if(r.status==='await')return pill('ဈေးမဖြတ်ရသေး','amber');
  if(r.status==='deposit')return pill('အပ်ထားသည်','blue');
  return due(r)>0?pill('ငွေရှင်းရန်ကျန်','amber'):pill('ငွေရှင်းပြီး');
 }

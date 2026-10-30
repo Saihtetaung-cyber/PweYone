@@ -307,7 +307,7 @@
 <script id="stock-ledger-detail-version2" src="/js/source/stock-ledger-details.js"></script>
 <link rel="stylesheet" href="/css/adjustment-rate-dialog.css">
 <link rel="stylesheet" href="/css/opening-product-picker.css">
-<script src="/js/server-bridge.js"></script><script src="/js/service-rate-settings.js"></script><script src="/js/opening-product-picker.js"></script><script src="/js/loan-interest-policies.js"></script><script src="/js/server-reports.js"></script><link rel="stylesheet" href="/css/list-pagination.css"><script src="/js/list-pagination.js"></script><link rel="stylesheet" href="/css/opening-cash-flow.css"><script src="/js/opening-cash-flow.js"></script><script src="/js/opening-excel-import.js"></script><script src="/js/money-input-format.js"></script></body>
+<script src="/js/server-bridge.js"></script><script src="/js/service-rate-settings.js"></script><script src="/js/opening-product-picker.js"></script><script src="/js/loan-interest-policies.js"></script><script src="/js/server-reports.js"></script><link rel="stylesheet" href="/css/list-pagination.css"><script src="/js/list-pagination.js"></script><link rel="stylesheet" href="/css/opening-cash-flow.css"><script src="/js/opening-cash-flow.js"></script><script src="/js/opening-excel-import.js"></script><script src="/js/money-input-format.js"></script><link rel="stylesheet" href="/css/adjustment-ledger.css"><script src="/js/adjustment-ledger.js"></script></body>
 </html>
 
 @endverbatim

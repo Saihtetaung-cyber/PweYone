@@ -164,9 +164,8 @@ final class OpeningWorkbook
         Records::require($base !== false, 'နမူနာဖိုင် ပြုလုပ်မရပါ။');
         $path = $base.'.xlsx';
         unlink($base);
-        copy(resource_path('templates/opening-import.xlsx'), $path);
         try {
-            $archive = $this->archive($path);
+            $archive = $this->archive(resource_path('templates/opening-import.xlsx'));
             $paths = $this->sheetPaths($archive);
             $doc = new DOMDocument('1.0', 'UTF-8');
             $root = $doc->appendChild($doc->createElementNS(self::NS, 'worksheet'));
@@ -186,13 +185,43 @@ final class OpeningWorkbook
                     $text->appendChild($doc->createTextNode((string) $values[$i]));
                 }
             }
-            $archive[$paths['_Lists']] = $doc->saveXML();
+            $this->writeTemplateArchive($archive, $paths['_Lists'], $doc->saveXML(), $path);
             unset($archive);
+            // Download headers must use the rewritten ZIP size, not cached source-file metadata.
+            clearstatcache(true, $path);
 
             return $path;
         } catch (Throwable $e) {
-            unlink($path);
+            if (is_file($path)) {
+                unlink($path);
+            }
             throw $e;
         }
+    }
+
+    /** Write the trusted template as ZIP 2.0, without PharData's version-zero headers. */
+    private function writeTemplateArchive(PharData $archive, string $listPath, string $listXml, string $path): void
+    {
+        $body = '';
+        $directory = '';
+        $count = 0;
+        $prefixLength = strlen('phar://'.$archive->getPath().'/');
+        foreach (new RecursiveIteratorIterator($archive) as $entry) {
+            $name = substr($entry->getPathname(), $prefixLength);
+            $content = $name === $listPath ? $listXml : $entry->getContent();
+            $compressed = gzdeflate($content);
+            Records::require($compressed !== false, 'Cannot compress the Excel template.');
+            $crc = crc32($content);
+            $compressedSize = strlen($compressed);
+            $size = strlen($content);
+            $nameLength = strlen($name);
+            $offset = strlen($body);
+            // ZIP 2.0, UTF-8 names, Deflate, and the valid DOS epoch date (1980-01-01).
+            $body .= pack('VvvvvvVVVvv', 0x04034B50, 20, 0x0800, 8, 0, 33, $crc, $compressedSize, $size, $nameLength, 0).$name.$compressed;
+            $directory .= pack('VvvvvvvVVVvvvvvVV', 0x02014B50, 20, 20, 0x0800, 8, 0, 33, $crc, $compressedSize, $size, $nameLength, 0, 0, 0, 0, 0, $offset).$name;
+            $count++;
+        }
+        $bytes = $body.$directory.pack('VvvvvVVv', 0x06054B50, 0, 0, $count, $count, strlen($directory), strlen($body), 0);
+        Records::require(file_put_contents($path, $bytes) === strlen($bytes), 'Cannot save the Excel template.');
     }
 }

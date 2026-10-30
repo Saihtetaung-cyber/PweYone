@@ -16,6 +16,43 @@ final class Projection
         return DB::transaction(fn () => $this->build($actor));
     }
 
+    /** @param array{afterQuantity?: ?string, qtyAfter?: ?string, weighedUnknown?: bool} $details */
+    private function quantityAfterStockEvent(object $event, array $details, ?string $beforeQuantity): ?string
+    {
+        if (in_array($event->kind, ['receive', 'opening', 'weigh'], true)) {
+            return $event->quantity;
+        }
+        if ($event->kind === 'receipt_correction' && array_key_exists('afterQuantity', $details)) {
+            return $details['afterQuantity'];
+        }
+        if ($event->kind === 'adjust') {
+            if (array_key_exists('qtyAfter', $details)) {
+                return $details['qtyAfter'];
+            }
+            if ($details['weighedUnknown'] ?? false) {
+                return $event->quantity;
+            }
+
+            return $beforeQuantity !== null && $event->quantity !== null
+                ? D::add($beforeQuantity, $event->quantity)
+                : $beforeQuantity;
+        }
+        $removesStock = in_array($event->kind, ['dispatch', 'pack', 'hold', 'transfer'], true)
+            || ($event->kind === 'purchase' && $event->destination_lot_id);
+        if ($removesStock) {
+            return $beforeQuantity !== null && $event->quantity !== null
+                ? D::sub($beforeQuantity, $event->quantity)
+                : null;
+        }
+        if (in_array($event->kind, ['receipt_correction', 'opening_reversal'], true)) {
+            return $beforeQuantity !== null && $event->quantity !== null
+                ? D::add($beforeQuantity, $event->quantity)
+                : null;
+        }
+
+        return $beforeQuantity;
+    }
+
     private function build(User $actor): array
     {
         $s = json_decode(file_get_contents(resource_path('data/interface-defaults.json')), true, 512, JSON_THROW_ON_ERROR);
@@ -119,6 +156,7 @@ final class Projection
                 $purchase = $buy ? $docs[$buy->document_id] : null;
                 $sold = D::sum($lines->filter(fn ($l) => $l->source_line_id === $line->id && ($docs[$l->document_id]->kind ?? '') === 'sale')->pluck('quantity'));
                 $r = ['id' => (string) $line->id, 'backendDocumentId' => $doc->id, 'purchaseDocumentId' => $purchase?->id, 'no' => $doc->number.' / '.$line->id, 'voucherNo' => $doc->number, 'date' => $doc->business_date, 'partnerId' => (string) $doc->party_id, 'name' => $name, 'type' => R::details($party)['type'] ?? 'trader', 'product' => $products[$line->product_id]->name, 'productId' => (string) $line->product_id, 'grade' => $line->grade, 'qty' => $buy?->quantity ?? $line->quantity ?? '0', 'weightKnown' => $line->quantity !== null, 'bags' => $line->bags ?? '0', 'actualBags' => $line->bags, 'rawBags' => ($extra['bagType'] ?? 'raw') === 'raw' ? $line->bags ?? '0' : '0', 'bagType' => $extra['bagType'] ?? 'raw', 'packageViss' => $extra['packageViss'] ?? '0', 'packageCount' => ($extra['bagType'] ?? '') === 'finished' ? $line->bags ?? '0' : '0', 'warehouse' => (string) $line->warehouse_id, 'status' => $buy ? 'purchased' : 'await', 'price' => $buy?->price, 'priceBasis' => $buy?->price_basis, 'net4' => $buy?->net, 'backendGross' => $buy?->gross, 'advance' => 0, 'wage' => 0, 'weigh' => 0, 'paid' => $buy?->paid ?? '0', 'payments' => $purchase ? $paymentRows($purchase->id, $buy->id) : [], 'note' => $doc->note ?? '', 'car' => $doc->vehicle ?? '', 'v4' => true];
+                $r['splitPurchase2'] = isset($extra['splitFromLineId']) || isset($extra['originalReceivedQuantity']);
                 if ($buy) {
                     $r += ['purchaseDate' => $purchase->business_date, 'purchaseNo' => $purchase->number, 'purchaseBagViss47' => R::details($buy)['purchaseBagViss'] ?? null, 'standardBagViss47' => $products[$line->product_id]->standard_viss ?? '0', 'purchaseBagCount55' => R::details($buy)['purchaseBags'] ?? null, 'charges4' => $chargesByDocument[$purchase->id]];
                     if (D::cmp($sold, '0') > 0) {
@@ -147,11 +185,12 @@ final class Projection
                 $s['sales'][] = $r;
             }
         }
-        $s['lots'] = $lots->map(function ($l) use ($products, $parties, $lines, $docs) {
+        $stockCheckService = app(BusinessService::class);
+        $s['lots'] = $lots->map(function ($l) use ($products, $parties, $lines, $docs, $stockCheckService) {
             $rec = $l->receipt_line_id ? $lines[$l->receipt_line_id] : null;
             $party = $parties[$l->party_id] ?? null;
 
-            return ['id' => (string) $l->id, 'product' => $products[$l->product_id]->name, 'grade' => $l->grade, 'qty' => $l->quantity ?? '0', 'weightKnown' => $l->quantity !== null, 'bags' => $l->bags ?? '0', 'actualBags' => $l->bags, 'rawBags' => $l->stock_form === 'loose' ? $l->bags ?? '0' : '0', 'bagType' => $l->stock_form === 'packaged' ? 'finished' : 'raw', 'packageCount' => $l->stock_form === 'packaged' ? $l->bags ?? '0' : '0', 'packageViss' => $l->package_viss ?? '0', 'packType' => $l->package_type_id ? (string) $l->package_type_id : '', 'owner' => $l->owner, 'name' => $l->owner === 'owned' ? 'ပွဲရုံပိုင်' : ($party?->name ?? ''), 'partnerId' => $l->owner === 'supplier' ? (string) ($l->party_id ?? '') : '', 'buyerId' => $l->owner === 'customer' ? (string) ($l->party_id ?? '') : '', 'cost' => $l->unit_cost, 'receiptId' => $l->owner !== 'customer' && $l->receipt_line_id ? (string) $l->receipt_line_id : '', 'saleId' => $l->sale_line_id ? (string) $l->sale_line_id : '', 'warehouse' => (string) $l->warehouse_id, 'batch' => $l->batch, 'entryDate' => $l->entry_date, 'stockForm' => $l->stock_form, 'originPartnerId' => $rec ? (string) $docs[$rec->document_id]->party_id : '', 'originReceiptNo' => $rec ? $docs[$rec->document_id]->number : ''];
+            return ['id' => (string) $l->id, 'stockCheckSignature2' => $stockCheckService->stockCheckFingerprint($l), 'product' => $products[$l->product_id]->name, 'grade' => $l->grade, 'qty' => $l->quantity ?? '0', 'weightKnown' => $l->quantity !== null, 'bags' => $l->bags ?? '0', 'actualBags' => $l->bags, 'rawBags' => $l->stock_form === 'loose' ? $l->bags ?? '0' : '0', 'bagType' => $l->stock_form === 'packaged' ? 'finished' : 'raw', 'packageCount' => $l->stock_form === 'packaged' ? $l->bags ?? '0' : '0', 'packageViss' => $l->package_viss ?? '0', 'packType' => $l->package_type_id ? (string) $l->package_type_id : '', 'owner' => $l->owner, 'name' => $l->owner === 'owned' ? 'ပွဲရုံပိုင်' : ($party?->name ?? ''), 'partnerId' => $l->owner === 'supplier' ? (string) ($l->party_id ?? '') : '', 'buyerId' => $l->owner === 'customer' ? (string) ($l->party_id ?? '') : '', 'cost' => $l->unit_cost, 'receiptId' => $l->owner !== 'customer' && $l->receipt_line_id ? (string) $l->receipt_line_id : '', 'saleId' => $l->sale_line_id ? (string) $l->sale_line_id : '', 'warehouse' => (string) $l->warehouse_id, 'batch' => $l->batch, 'entryDate' => $l->entry_date, 'stockForm' => $l->stock_form, 'originPartnerId' => $rec ? (string) $docs[$rec->document_id]->party_id : '', 'originReceiptNo' => $rec ? $docs[$rec->document_id]->number : ''];
         })->values()->all();
         $openingEvents = $events->where('kind', 'opening')->keyBy('lot_id');
         foreach ($s['lots'] as &$lot) {
@@ -187,7 +226,7 @@ final class Projection
         $s['cashIns50'] = [];
         $s['traderSettlements74'] = [];
         foreach ($docs as $doc) {
-            if ($doc->status === 'reversed') {
+            if ($doc->status === 'reversed' && ! in_array($doc->kind, ['funding', 'cash_transfer'], true)) {
                 continue;
             }$x = R::details($doc);
             $party = $parties[$doc->party_id] ?? null;
@@ -209,8 +248,15 @@ final class Projection
             if ($doc->kind === 'collection_request') {
                 $s['collectionSlips'][] = ['id' => (string) $doc->id, 'no' => $doc->number, 'date' => $doc->business_date, 'saleId' => (string) ($lines->firstWhere('document_id', $doc->source_document_id)?->id ?? ''), 'name' => $parties[$docs[$doc->source_document_id]->party_id]->name ?? '', 'amount' => $doc->net, 'received' => $doc->paid];
             }
-            if (in_array($doc->kind, ['funding', 'cash_transfer'], true) && $actor->role === 'owner') {
-                $s['cashIns50'][] = ['id' => (string) $doc->id, 'ref' => $doc->number, 'date' => $doc->business_date, 'type' => $doc->kind === 'funding' ? 'external' : 'transfer', 'source' => $accounts[$x['source'] ?? '']->code ?? null, 'destination' => $accounts[$x['destination'] ?? '']->code ?? null, 'amount' => $doc->net, 'coaId' => $x['coaId'] ?? 'COA50-CAPITAL', 'description' => $x['description'] ?? '', 'reference' => $x['reference'] ?? '', 'status' => $doc->status, 'createdAt' => $doc->created_at];
+            if (in_array($doc->kind, ['funding', 'cash_transfer'], true)) {
+                $source = $accounts->get($x['source'] ?? '');
+                $destination = $accounts->get($x['destination'] ?? '');
+                $sourceVisible = $source !== null && $visible->has($source->id);
+                $destinationVisible = $destination !== null && $visible->has($destination->id);
+                if (! $sourceVisible && ! $destinationVisible) {
+                    continue;
+                }
+                $s['cashIns50'][] = ['id' => (string) $doc->id, 'ref' => $doc->number, 'date' => $doc->business_date, 'type' => $doc->kind === 'funding' ? 'external' : 'transfer', 'source' => $sourceVisible ? $source->code : null, 'destination' => $destinationVisible ? $destination->code : null, 'sourceHidden' => $source !== null && ! $sourceVisible, 'destinationHidden' => $destination !== null && ! $destinationVisible, 'amount' => $doc->net, 'coaId' => $x['coaId'] ?? 'COA50-CAPITAL', 'description' => $x['description'] ?? '', 'reference' => $x['reference'] ?? '', 'status' => $doc->status, 'createdAt' => $doc->created_at];
             }
             if ($doc->kind === 'settlement') {
                 $charges = $chargesByDocument[$doc->id];
@@ -230,11 +276,17 @@ final class Projection
         $s['transfers'] = [];
         $s['adjustments'] = [];
         $s['stockOpening'] = [];
+        $stockQuantities = [];
         foreach ($events as $e) {
             $lot = $lots[$e->lot_id];
             $doc = $docs[$e->document_id] ?? null;
             $x = R::details($e);
             $p = $products[$lot->product_id];
+            $beforeQuantity = $stockQuantities[$lot->id] ?? null;
+            $stockQuantities[$lot->id] = $this->quantityAfterStockEvent($e, $x, $beforeQuantity);
+            if ($e->destination_lot_id) {
+                $stockQuantities[$e->destination_lot_id] = $e->quantity;
+            }
             $base = ['id' => (string) $e->id, 'date' => $e->business_date, 'recordedAt' => $e->created_at, 'product' => $p->name, 'grade' => $lot->grade, 'qty' => $e->quantity ?? '0', 'bags' => $e->bags, 'batch' => $lot->batch, 'warehouse' => (string) $lot->warehouse_id, 'owner' => $lot->owner, 'sourceLot' => (string) $lot->id];
             if (in_array($e->kind, ['receive', 'dispatch', 'receipt_correction'], true)) {
                 $s['moves'][] = $base + ['direction' => $e->kind === 'dispatch' ? 'out' : 'in', 'ref' => $doc?->number ?? '', 'kind' => $e->kind, 'weightKnown' => $e->quantity !== null];
@@ -270,7 +322,10 @@ final class Projection
             if ($e->kind === 'adjust') {
                 $adjust = $base;
                 $adjust['qty'] = ltrim((string) ($e->quantity ?? '0'), '-');
-                $s['adjustments'][] = $adjust + ['direction' => D::cmp($e->quantity ?? '0', '0') < 0 ? 'out' : 'in', 'note' => $doc?->note ?? '', 'lotId' => (string) $lot->id, 'sourceReceiptId' => (string) ($lot->receipt_line_id ?? ''), 'receiptQtyIncluded2' => (bool) ($x['weighedUnknown'] ?? false), 'history2' => $x + ['schema' => 1, 'owner' => $x['owner'] ?? $lot->owner, 'qtyDelta' => $e->quantity, 'sourceReceiptId' => (string) ($lot->receipt_line_id ?? ''), 'recordedAt' => $e->created_at]];
+                $owner = $x['owner'] ?? $lot->owner;
+                $warehouseId = $x['warehouse'] ?? $lot->warehouse_id;
+                $directionAmount = D::cmp($e->quantity ?? '0', '0') === 0 ? ($e->bags ?? '0') : $e->quantity;
+                $s['adjustments'][] = $adjust + ['direction' => D::cmp($directionAmount, '0') < 0 ? 'out' : 'in', 'note' => $doc?->note ?? '', 'lotId' => (string) $lot->id, 'sourceReceiptId' => (string) ($lot->receipt_line_id ?? ''), 'receiptQtyIncluded2' => (bool) ($x['weighedUnknown'] ?? false), 'history2' => $x + ['schema' => 1, 'product' => $p->name, 'owner' => $owner, 'ownerName' => $owner === 'owned' ? 'ပွဲရုံပိုင်' : ($parties[$x['party'] ?? $lot->party_id]->name ?? ''), 'warehouseName' => $warehouses[$warehouseId]->name ?? '', 'sourceBatch' => $lot->batch, 'qtyBefore' => $beforeQuantity, 'qtyAfter' => $stockQuantities[$lot->id] ?? null, 'qtyDelta' => $e->quantity, 'bagsDelta' => $e->bags, 'reasonLabel' => $doc?->note ?? 'မြေပြင်စစ်ချက်', 'sourceReceiptId' => (string) ($lot->receipt_line_id ?? ''), 'recordedAt' => $e->created_at]];
             }
             if (in_array($e->kind, ['opening', 'opening_reversal'], true)) {
                 $s['stockOpening'][] = ['key' => $p->name.'|'.$lot->grade, 'product' => $p->name, 'grade' => $lot->grade, 'qty' => $e->quantity, 'bags' => $e->bags, 'date' => $e->business_date];

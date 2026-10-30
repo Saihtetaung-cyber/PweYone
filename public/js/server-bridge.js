@@ -126,8 +126,13 @@
  }
  function voucher(){
   const sale=v4Kind==='sale',rows=readVoucherLines4(),c=readCharges4();
-  const input={date:v('fDate'),party_id:v('fParty'),delivery:v('fDelivery'),payments:splits(),payment_amount:decimal('fPaid'),adjustments:adjustments(),labor:labor(),lines:rows.map(x=>sale?{lot_id:x.l?.id,quantity:decimal('vq'+x.i),price:decimal('vr'+x.i),basis:v('fBasis')==='bag'?'standard_bag':'viss',buyer_package_viss:decimal('vBuyerBag46'+x.i)}:{receipt_line_id:x.r?.id,price:decimal('vr'+x.i),basis:v('fBasis')==='bag'?'standard_bag':'viss',purchase_package_viss:decimal('vPurchaseBag47'+x.i),purchase_bags:decimal('vPurchaseCount55'+x.i)})};
-  if(!sale){const partyId=rows[0]?.r?.partnerId;input.recoveries=recoveries(partyId,c.advance);input.loan_offsets=(c.loanPayments38||[]).filter(x=>x.principal+x.interest>0).map(x=>({document_id:x.loanId,principal:str(x.principal),interest:str(x.interest)}));
+  const input={date:v('fDate'),party_id:v('fParty'),delivery:v('fDelivery'),payments:splits(),payment_amount:decimal('fPaid'),adjustments:adjustments(),labor:labor(),lines:rows.map(x=>sale?{lot_id:x.l?.id,quantity:decimal('vq'+x.i),price:decimal('vr'+x.i),basis:v('fBasis')==='bag'?'standard_bag':'viss',buyer_package_viss:decimal('vBuyerBag46'+x.i)}:{receipt_line_id:x.r?.id,quantity:decimal('vq'+x.i),...(v('vPurchaseSourceBags'+x.i)!==''?{source_bags:decimal('vPurchaseSourceBags'+x.i)}:{}),price:decimal('vr'+x.i),basis:v('fBasis')==='bag'?'standard_bag':'viss',purchase_package_viss:decimal('vPurchaseBag47'+x.i),purchase_bags:decimal('vPurchaseCount55'+x.i)})};
+  if(!sale){const partyId=rows[0]?.r?.partnerId;
+   const requested=Number(c.advance),balance=Math.max(0,Number(supplierBalance(partyId))),existing=Math.min(requested,balance);
+   input.recoveries=recoveries(partyId,existing);
+   input.additional_advance_amount=str(Math.max(0,Math.round(requested*100)-Math.round(existing*100))/100);
+   input.advance_account_id=account(v('fPurchaseAdvanceAccount'));
+   input.loan_offsets=(c.loanPayments38||[]).filter(x=>x.principal+x.interest>0).map(x=>({document_id:x.loanId,principal:str(x.principal),interest:str(x.interest)}));
    const carriage=Number(c.carriage||0),outlays=carriageOutlays(rows),available=outlays.reduce((sum,expense)=>sum+Math.round(outlayRemaining(expense)*100),0);
    if(!Number.isFinite(carriage)||carriage<0||Math.abs(carriage*100-Math.round(carriage*100))>0.000001)throw Error('တန်ဆာခ ပမာဏကို မှန်ကန်စွာ ဖြည့်ပါ။');
    const recovered=Math.min(Math.round(carriage*100),available);
@@ -243,10 +248,39 @@
   const result=purchaseMarketForm.apply(this,args);
   if(v4Kind!=='purchase'||!$('voucher4'))return result;
   const rows=readVoucherLines4();
+  for(const row of rows){
+   const quantity=$('vq'+row.i),lots=state.lots.filter(lot=>lot.receiptId===row.r?.id&&lot.owner==='supplier'),available=lots.reduce((sum,lot)=>sum+Number(lot.qty),0);
+   if(!quantity)continue;
+   quantity.readOnly=false;quantity.min='0.00000001';quantity.max=String(available);quantity.value=String(available);
+   quantity.closest('.field').querySelector('label').textContent='ယခု ဈေးဖြတ်ဝယ်ယူမည့် ပိဿာ';
+   const help=document.createElement('p');help.className='field-help';help.textContent='ဝယ်ယူနိုင်သော ကုန်သည်ပိုင်လက်ကျန် '+vissText37(available)+' ပိဿာ။ တစ်စိတ်တစ်ပိုင်း ဝယ်ယူနိုင်ပြီး ကျန်ကုန်ကို ဆက်ရောင်းနိုင်ပါသည်။';quantity.closest('.field').append(help);
+   const raw=lots.some(lot=>lot.actualBags!=null&&!(Number(lot.packageViss)>0));
+   if(raw){
+    const holder=document.createElement('div');holder.innerHTML=field('ယခုဝယ်ယူမည့် မူလအိတ်အရေအတွက်','vPurchaseSourceBags'+row.i,{type:'number',min:0,step:1,suffix:'အိတ်',help:'ခွဲဝယ်ယူလျှင် တကယ်ပါဝင်သော အကြမ်းအိတ်ကို ဖြည့်ပါ။ အိတ်ဖွဲ့ရန် စီစဉ်သည့် အရေအတွက်နှင့် သီးခြားဖြစ်သည်။'});quantity.closest('.field').after(holder);
+   }
+   quantity.addEventListener('input',()=>{
+    const bags=$('vPurchaseSourceBags'+row.i);if(bags)bags.required=Number(quantity.value)<available;
+    const size=$('vPurchaseBag47'+row.i),count=$('vPurchaseCount55'+row.i),amount=Number(quantity.value);
+    if(amount>0&&size&&count&&count.dataset.manuallyChanged55!=='1'){
+     if(Number(size.value)>amount)size.value=String(amount);
+     count.value=String(Math.max(1,Math.floor(amount/Number(size.value))));
+    }
+    calcVoucher4();
+   });
+  }
   const advance=$('fAdvance'),partyId=rows[0]?.r?.partnerId;
   if(advance&&partyId){
    const balance=Number(supplierBalance(partyId)),available=Number.isFinite(balance)?Math.max(0,balance):0;
-   advance.min='0';advance.max=String(available);advance.value=String(available);
+   advance.min='0';advance.removeAttribute('max');advance.value=String(available);
+   const extra=document.createElement('div');extra.id='purchaseAdditionalAdvance';
+   extra.innerHTML=accountField('fPurchaseAdvanceAccount','cash','ထပ်ထုတ်ပေးမည့် ကြိုသုံးငွေ ထုတ်မည့်စာရင်း')+'<p class="field-help" id="purchaseAdditionalAdvanceNote"></p>';
+   advance.closest('.field').after(extra);
+   const updateAdvance=()=>{
+    const additional=Math.max(0,Math.round((moneyInput(advance.value)-available)*100)/100);
+    extra.hidden=additional<=0;
+    $('purchaseAdditionalAdvanceNote').textContent='ယခုထပ်ထုတ်ပေးမည့်ငွေ '+cashText(additional)+' ကို ရွေးထားသောငွေစာရင်းမှ နုတ်ပြီး ဘောက်ချာတွင် ပြန်နုတ်ပါမည်။';
+   };
+   advance.addEventListener('input',updateAdvance);updateAdvance();
   }
   const carriage=carriageOutlays(rows).reduce((sum,expense)=>sum+Math.round(outlayRemaining(expense)*100),0)/100,form=$('voucher4');
   const carriageBox=document.createElement('section');carriageBox.className='summary-box mb';carriageBox.id='purchaseCarriageRecovery';

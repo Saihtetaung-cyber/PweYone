@@ -23,7 +23,7 @@
  const option=(id,label)=>`<option value="${E(id)}">${E(label)}</option>`;
  function options(id,items,placeholder){const el=$(id);el.innerHTML=option('',placeholder)+items.map(([key,text])=>option(key,text)).join('');el.value=items.length===1?items[0][0]:'';}
  const tabs=(items,current,fn)=>`<div class="gc2-tabs" role="group">${items.map(([key,label])=>`<button type="button" class="${key===current?'active':''}" aria-pressed="${key===current}" onclick="${fn}('${key}')">${E(label)}</button>`).join('')}</div>`;
- const signature=l=>JSON.stringify(l?{id:l.id,owner:l.owner,person:personId(l),warehouse:l.warehouse,receipt:l.receiptId||'',sale:l.saleId||'',batch:l.batch||'',qty:num(l.qty),unknown:unknown(l),bags:bagCount(l),stockForm:l.stockForm||'',size:size(l),cost:num(l.cost)}:null);
+ const signature=l=>l?.stockCheckSignature2||JSON.stringify(l?{id:l.id,owner:l.owner,person:personId(l),warehouse:l.warehouse,receipt:l.receiptId||'',sale:l.saleId||'',batch:l.batch||'',qty:num(l.qty),unknown:unknown(l),bags:bagCount(l),stockForm:l.stockForm||'',size:size(l),cost:num(l.cost)}:null);
  const weight=q=>finite(q)?vissText37(q)+' ပိဿာ':q===null?'မချိန်ထား':'—';
  const bags=b=>finite(b)?N(b)+' အိတ်':b===null?'မရေတွက်ထား':'—';
  const stamp=iso=>iso&&Number.isFinite(Date.parse(iso))?new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Rangoon',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(iso)):'—';

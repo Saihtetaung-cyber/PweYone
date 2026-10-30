@@ -78,6 +78,9 @@ input[readonly],input:disabled,select:disabled{background:#f2f5f8;color:#53647c}
 .v2-task strong,.v2-task .name-btn{font-size:15px}.v2-task .meta{font-size:13px}
 .v2-task .task-icon{width:34px;height:34px}
 .v2-task .btn{min-width:unset}
+.v2-task-with-actions{flex-wrap:wrap}
+.v2-task .v2-task-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-left:auto}
+.v2-task .v2-task-actions .btn{min-width:unset;margin-left:0}
 .v2-record{padding:15px 18px;gap:15px;grid-template-columns:minmax(190px,1fr) 140px 165px 130px}
 .v2-record .record-meta{font-size:13px;margin-top:3px}.v2-record .record-sub{font-size:12px}
 .v2-record .record-qty{font-size:16px}.v2-record .btn{font-size:13px;min-height:40px}

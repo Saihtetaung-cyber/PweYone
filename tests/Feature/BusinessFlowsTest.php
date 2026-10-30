@@ -191,6 +191,29 @@ class BusinessFlowsTest extends TestCase
             $this->assertSame($actor->role === 'owner', str_contains($lists, '>Home<'));
             $this->assertSame($actor->role === 'owner', str_contains($lists, 'ကြိုထုတ်ငွေအရင်း'));
             $this->assertSame(['ငွေလက်ကျန်' => [], 'ကုန်လက်ကျန်' => [], 'တစ်ဦးချင်းငွေကျန်' => []], app(OpeningWorkbook::class)->read($path));
+            $response->assertDownload('PweYon_Opening_Import_Template.xlsx');
+            $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $expectedBytes = file_get_contents($path);
+            $this->assertSame("PK\x03\x04\x14\x00", substr($expectedBytes, 0, 6), 'Excel Deflate entries require ZIP version 2.0, not version zero.');
+            $endOffset = strrpos($expectedBytes, "PK\x05\x06");
+            $this->assertNotFalse($endOffset);
+            $end = unpack('vdisk/vcentralDisk/ventriesDisk/ventries/Vsize/Voffset/vcomment', substr($expectedBytes, $endOffset + 4, 18));
+            $offset = $end['offset'];
+            for ($entry = 0; $entry < $end['entries']; $entry++) {
+                $this->assertSame("PK\x01\x02\x14\x00\x14\x00", substr($expectedBytes, $offset, 8));
+                $header = unpack('vname/vextra/vcomment', substr($expectedBytes, $offset + 28, 6));
+                $offset += 46 + $header['name'] + $header['extra'] + $header['comment'];
+            }
+            $this->assertSame($endOffset, $offset);
+            $this->assertSame((string) strlen($expectedBytes), $response->headers->get('Content-Length'));
+            ob_start();
+            try {
+                $response->baseResponse->sendContent();
+                $downloadedBytes = ob_get_contents();
+            } finally {
+                ob_end_clean();
+            }
+            $this->assertSame($expectedBytes, $downloadedBytes, 'The download must include the complete XLSX ZIP, including its central directory.');
         }
     }
 
@@ -342,6 +365,116 @@ class BusinessFlowsTest extends TestCase
         $this->assertCount(1, $draft['imports']);
         $this->assertSame(0, DB::table('stock_lots')->count());
         $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+    }
+
+    public function test_purchase_issues_and_recovers_additional_advance_once(): void
+    {
+        $receipt = $this->receive();
+        $advance = $this->runCommand('advance.create', ['party_id' => $this->trader->id, 'amount' => '10000', 'account_id' => $this->cash->id]);
+        $input = ['lines' => [['receipt_line_id' => $receipt['line_ids'][0], 'price' => '800', 'basis' => 'viss']], 'recoveries' => [['document_id' => $advance['document_id'], 'amount' => '10000']], 'additional_advance_amount' => '10000', 'advance_account_id' => $this->cash->id];
+        $key = (string) Str::uuid();
+        $result = $this->runCommand('purchase.create', $input, $this->clerk, $key);
+        $this->equalDecimal('1180000', R::get('documents', $result['document_id'])->net);
+        $this->equalDecimal('1980000', R::get('cash_accounts', $this->cash->id)->balance);
+        $additional = DB::table('documents')->where('kind', 'advance')->where('source_document_id', $result['document_id'])->sole();
+        $this->equalDecimal('10000', $additional->net);
+        $this->equalDecimal('20000', DB::table('recoveries')->where('target_document_id', $result['document_id'])->sum('amount'));
+        $this->equalDecimal('10000', DB::table('recoveries')->where('source_document_id', $additional->id)->sum('amount'));
+        $this->equalDecimal('-10000', DB::table('cash_entries')->where('document_id', $additional->id)->sum('amount'));
+        $this->assertSame($result, $this->runCommand('purchase.create', $input, $this->clerk, $key));
+        $this->assertSame(2, DB::table('documents')->where('kind', 'advance')->count());
+        $this->equalDecimal('1980000', R::get('cash_accounts', $this->cash->id)->balance);
+    }
+
+    public function test_purchase_additional_advance_failure_rolls_back_cash_and_stock(): void
+    {
+        $receipt = $this->receive();
+        foreach ([['additional_advance_amount' => '2000001', 'advance_account_id' => $this->cash->id], ['additional_advance_amount' => '1200001', 'advance_account_id' => $this->cash->id], ['additional_advance_amount' => '10000'], ['additional_advance_amount' => '-1', 'advance_account_id' => $this->cash->id], ['additional_advance_amount' => '10000', 'advance_account_id' => $this->home->id]] as $extra) {
+            try {
+                $this->purchase($receipt['line_ids'][0], $extra);
+                $this->fail('Invalid additional advance should fail.');
+            } catch (ValidationException $exception) {
+                $this->assertNotEmpty($exception->errors());
+            }
+            $this->assertSame(0, DB::table('documents')->whereIn('kind', ['purchase', 'advance'])->count());
+            $this->assertSame(0, DB::table('recoveries')->count());
+            $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+            $this->assertSame('supplier', $this->lot()->owner);
+        }
+    }
+
+    public function test_partial_purchase_keeps_trader_stock_available_for_direct_sales_and_later_purchases(): void
+    {
+        $receipt = $this->receive('100');
+        $sourceId = $receipt['line_ids'][0];
+        $input = ['lines' => [['receipt_line_id' => $sourceId, 'quantity' => '40', 'price' => '800', 'basis' => 'viss']]];
+        $key = (string) Str::uuid();
+
+        $purchase = $this->runCommand('purchase.create', $input, $this->clerk, $key);
+
+        $this->equalDecimal('32000', R::get('documents', $purchase['document_id'])->net);
+        $this->equalDecimal('40', DB::table('stock_lots')->where('owner', 'owned')->sum('quantity'));
+        $supplier = DB::table('stock_lots')->where('owner', 'supplier')->where('quantity', '>', 0)->sole();
+        $this->equalDecimal('60', $supplier->quantity);
+        $this->equalDecimal('100', DB::table('document_lines')->where('document_id', $receipt['document_id'])->sum('quantity'));
+        $state = app(Projection::class)->forUser($this->clerk);
+        $this->assertCount(2, $state['receipts']);
+        $this->assertCount(1, array_filter($state['receipts'], fn ($row) => $row['status'] === 'purchased'));
+        $this->assertCount(1, array_filter($state['receipts'], fn ($row) => $row['status'] === 'await'));
+        $this->assertTrue(collect($state['receipts'])->every(fn ($row) => $row['splitPurchase2']));
+        $stock = app(Reports::class)->stock($this->owner, '2026-10-25', '2026-10-25', null, 'supplier');
+        $this->equalDecimal('60', $stock['groups'][0]['closing']);
+        $this->assertSame($purchase, $this->runCommand('purchase.create', $input, $this->clerk, $key));
+        $sale = $this->runCommand('sale.create', ['party_id' => $this->buyer->id, 'delivery' => 'direct', 'lines' => [['lot_id' => $supplier->id, 'quantity' => '20', 'price' => '1000', 'basis' => 'viss']]], $this->clerk);
+        $settlement = DB::table('documents')->where('source_document_id', $sale['document_id'])->where('kind', 'settlement')->sole();
+        $this->assertSame($this->trader->id, $settlement->party_id);
+        $this->equalDecimal('20000', $settlement->net);
+        $this->equalDecimal('40', R::get('stock_lots', $supplier->id)->quantity);
+        $this->runCommand('purchase.create', ['lines' => [['receipt_line_id' => $sourceId, 'quantity' => '10', 'price' => '900', 'basis' => 'viss']]]);
+        $last = $this->purchase($sourceId);
+        $this->equalDecimal('24000', R::get('documents', $last['document_id'])->net);
+        $this->equalDecimal('80', DB::table('stock_lots')->where('owner', 'owned')->sum('quantity'));
+        $this->equalDecimal('0', DB::table('stock_lots')->where('owner', 'supplier')->sum('quantity'));
+        $this->equalDecimal('100', DB::table('document_lines')->where('document_id', $receipt['document_id'])->sum('quantity'));
+        $this->equalDecimal('2000000', R::get('cash_accounts', $this->cash->id)->balance);
+        $this->runCommand('payment.create', ['document_id' => $purchase['document_id'], 'payments' => [['account_id' => $this->cash->id, 'amount' => '10000']]]);
+        $this->equalDecimal('10000', R::get('documents', $purchase['document_id'])->paid);
+        $this->equalDecimal('0', R::get('documents', $last['document_id'])->paid);
+    }
+
+    public function test_partial_purchase_preserves_packaged_stock_weights_and_bags(): void
+    {
+        $receipt = $this->runCommand('receipt.create', ['party_id' => $this->trader->id, 'warehouse_id' => $this->warehouse->id, 'lines' => [['product_id' => $this->product->id, 'grade' => 'A', 'bag_type' => 'finished', 'bags' => '4', 'package_viss' => '25']]]);
+        $this->purchase($receipt['line_ids'][0], ['lines' => [['receipt_line_id' => $receipt['line_ids'][0], 'quantity' => '50', 'price' => '800', 'basis' => 'viss']]]);
+
+        foreach (['owned', 'supplier'] as $owner) {
+            $lot = DB::table('stock_lots')->where('owner', $owner)->where('quantity', '>', 0)->sole();
+            $this->equalDecimal('50', $lot->quantity);
+            $this->equalDecimal('2', $lot->bags);
+            $this->equalDecimal('25', $lot->package_viss);
+        }
+        $this->equalDecimal('4', DB::table('document_lines')->where('document_id', $receipt['document_id'])->sum('bags'));
+    }
+
+    public function test_partial_purchase_preserves_explicit_raw_bags_and_rejects_invalid_quantities_atomically(): void
+    {
+        $receipt = $this->receive('100', '10');
+        foreach ([['quantity' => '101'], ['quantity' => '0'], ['quantity' => '-1'], ['quantity' => '40'], ['quantity' => '40', 'source_bags' => '11']] as $extra) {
+            try {
+                $this->purchase($receipt['line_ids'][0], ['lines' => [$extra + ['receipt_line_id' => $receipt['line_ids'][0], 'price' => '800', 'basis' => 'viss']]]);
+                $this->fail('Invalid partial purchase should fail.');
+            } catch (ValidationException $exception) {
+                $this->assertNotEmpty($exception->errors());
+            }
+            $this->equalDecimal('100', $this->lot()->quantity);
+            $this->equalDecimal('10', $this->lot()->bags);
+            $this->assertSame(1, DB::table('document_lines')->where('document_id', $receipt['document_id'])->count());
+            $this->assertSame(0, DB::table('documents')->where('kind', 'purchase')->count());
+        }
+        $this->purchase($receipt['line_ids'][0], ['lines' => [['receipt_line_id' => $receipt['line_ids'][0], 'quantity' => '40', 'source_bags' => '3', 'price' => '800', 'basis' => 'viss']]]);
+        $this->equalDecimal('3', DB::table('stock_lots')->where('owner', 'owned')->sum('bags'));
+        $this->equalDecimal('7', DB::table('stock_lots')->where('owner', 'supplier')->sum('bags'));
+        $this->equalDecimal('10', DB::table('document_lines')->where('document_id', $receipt['document_id'])->sum('bags'));
     }
 
     public function test_receive_purchase_partial_payment(): void
@@ -570,8 +703,15 @@ class BusinessFlowsTest extends TestCase
         $this->runCommand('stock.check.reject', ['id' => $check['id'], 'note' => 'Recount']);
         $this->equalDecimal('300', R::get('stock_lots', $lot->id)->quantity);
         $check = $this->runCommand('stock.check.submit', ['lot_id' => $lot->id, 'quantity' => '295', 'reason' => 'Recount']);
+        $state = app(Projection::class)->forUser($this->owner);
+        $projectedCheck = collect($state['groundHistory64'])->firstWhere('id', (string) $check['id']);
+        $projectedLot = collect($state['lots'])->firstWhere('id', (string) $lot->id);
+        $this->assertSame($projectedCheck['sourceSignature2'], $projectedLot['stockCheckSignature2']);
+        $this->actingAs($this->clerk)->postJson('/api/commands', ['action' => 'stock.check.approve', 'input' => ['id' => $check['id']]], ['Idempotency-Key' => (string) Str::uuid()])->assertForbidden();
+        $this->equalDecimal('300', R::get('stock_lots', $lot->id)->quantity);
         $this->runCommand('stock.check.approve', ['id' => $check['id']]);
         $this->equalDecimal('295', R::get('stock_lots', $lot->id)->quantity);
+        $this->assertSame('approved', R::get('stock_checks', $check['id'])->status);
     }
 
     public function test_stale_stock_check_cannot_overwrite_new_stock(): void
@@ -580,6 +720,10 @@ class BusinessFlowsTest extends TestCase
         $lot = $this->lot();
         $check = $this->runCommand('stock.check.submit', ['lot_id' => $lot->id, 'quantity' => '290', 'reason' => 'Count']);
         $this->sale('50', 'direct');
+        $state = app(Projection::class)->forUser($this->owner);
+        $projectedCheck = collect($state['groundHistory64'])->firstWhere('id', (string) $check['id']);
+        $projectedLot = collect($state['lots'])->firstWhere('id', (string) $lot->id);
+        $this->assertNotSame($projectedCheck['sourceSignature2'], $projectedLot['stockCheckSignature2']);
         $this->expectException(ValidationException::class);
         $this->runCommand('stock.check.approve', ['id' => $check['id']]);
     }
@@ -905,6 +1049,58 @@ class BusinessFlowsTest extends TestCase
         } catch (HttpException $e) {
             $this->assertSame(403, $e->getStatusCode());
         }
+    }
+
+    public function test_clerk_funding_history_shows_visible_account_movements_and_redacts_hidden_endpoints(): void
+    {
+        $bank = R::insert('cash_accounts', ['code' => 'bank', 'name' => 'Visible Bank', 'type' => 'bank', 'staff_can_view' => true, 'opening_balance' => '1000', 'balance' => '1000']);
+        $private = R::insert('cash_accounts', ['code' => 'private', 'name' => 'Private Bank', 'type' => 'bank', 'staff_can_view' => false, 'opening_balance' => '1000', 'balance' => '1000']);
+        $fund = fn (int $destination, string $amount) => $this->runCommand('cash.fund', ['destination_id' => $destination, 'amount' => $amount, 'description' => 'Working capital', 'confirmed' => true]);
+        $transfer = fn (int $source, int $destination, string $amount) => $this->runCommand('cash.fund', ['mode' => 'transfer', 'source_id' => $source, 'destination_id' => $destination, 'amount' => $amount, 'description' => 'Account transfer', 'confirmed' => true]);
+        $cashFunding = $fund($this->cash->id, '100');
+        $bankFunding = $fund($bank->id, '200');
+        $hiddenFunding = $fund($this->home->id, '300');
+        $incoming = $transfer($this->home->id, $this->cash->id, '40');
+        $outgoing = $transfer($this->cash->id, $this->home->id, '10');
+        $visibleTransfer = $transfer($this->cash->id, $bank->id, '20');
+        $hiddenTransfer = $transfer($this->home->id, $private->id, '30');
+        $this->runCommand('cash.reverse', ['document_id' => $cashFunding['document_id'], 'reason' => 'Correction']);
+        $this->actingAs($this->clerk);
+
+        $state = $this->getJson('/api/state')->assertOk()->json();
+        $history = collect($state['cashIns50'])->keyBy('id');
+
+        $this->assertCount(5, $history);
+        $this->assertSame('reversed', $history[$cashFunding['document_id']]['status']);
+        $this->equalDecimal('200', $history[$bankFunding['document_id']]['amount']);
+        $this->assertFalse($history->has($hiddenFunding['document_id']));
+        $this->assertFalse($history->has($hiddenTransfer['document_id']));
+        $this->assertNull($history[$incoming['document_id']]['source']);
+        $this->assertTrue($history[$incoming['document_id']]['sourceHidden']);
+        $this->assertSame('cash', $history[$incoming['document_id']]['destination']);
+        $this->assertSame('cash', $history[$outgoing['document_id']]['source']);
+        $this->assertNull($history[$outgoing['document_id']]['destination']);
+        $this->assertTrue($history[$outgoing['document_id']]['destinationHidden']);
+        $this->assertSame('bank', $history[$visibleTransfer['document_id']]['destination']);
+        $this->assertNotContains('home', array_column($history->all(), 'source'));
+        $this->assertNotContains('home', array_column($history->all(), 'destination'));
+        $this->postJson('/api/commands', ['action' => 'cash.reverse', 'input' => ['document_id' => $outgoing['document_id'], 'reason' => 'Denied']], ['Idempotency-Key' => (string) Str::uuid()])->assertForbidden();
+
+        $ownerHistory = collect(app(Projection::class)->forUser($this->owner)['cashIns50'])->keyBy('id');
+        $this->assertCount(7, $ownerHistory);
+        $this->assertSame('home', $ownerHistory[$incoming['document_id']]['source']);
+        $this->assertSame('home', $ownerHistory[$outgoing['document_id']]['destination']);
+        $this->actingAs($this->owner)->withSession([WorkspaceAccess::SESSION_KEY => 'staff']);
+        $this->assertSame($state['cashIns50'], $this->getJson('/api/state')->assertOk()->json('cashIns50'));
+
+        R::update('cash_accounts', $bank->id, ['staff_can_view' => false]);
+        $restricted = collect(app(Projection::class)->forUser($this->clerk)['cashIns50'])->keyBy('id');
+        $this->assertCount(4, $restricted);
+        $this->assertFalse($restricted->has($bankFunding['document_id']));
+        $this->assertNull($restricted[$visibleTransfer['document_id']]['destination']);
+        $this->assertTrue($restricted[$visibleTransfer['document_id']]['destinationHidden']);
+        R::update('cash_accounts', $this->cash->id, ['staff_can_view' => false]);
+        $this->assertSame([], app(Projection::class)->forUser($this->clerk)['cashIns50']);
     }
 
     public function test_transaction_failure_rolls_back_documents_lots_and_cash(): void
@@ -1349,6 +1545,84 @@ class BusinessFlowsTest extends TestCase
         }
     }
 
+    public function test_adjustment_ledger_filters_saved_voucher_charges_and_totals_each_voucher_once(): void
+    {
+        $service = R::insert('adjustment_rates', ['name' => 'Original service fee', 'kind' => 'both', 'calc_mode' => 'service_percent', 'item_type' => 'service', 'rate' => '1']);
+        $addition = R::insert('adjustment_rates', ['name' => 'Packing charge', 'kind' => 'both', 'calc_mode' => 'manual', 'item_type' => 'custom', 'rate' => '0']);
+        $deduction = R::insert('adjustment_rates', ['name' => 'Discount', 'kind' => 'both', 'calc_mode' => 'manual', 'item_type' => 'custom', 'rate' => '0']);
+        $labor = R::insert('labor_rates', ['name' => 'Handling', 'kind' => 'rate', 'rate' => '500']);
+        $mael = DB::table('labor_rates')->where('kind', 'mael')->first()->id;
+        $corn = R::insert('products', ['name' => 'Corn', 'grades' => ['A'], 'standard_viss' => '25']);
+        $receipt = $this->runCommand('receipt.create', ['party_id' => $this->trader->id, 'warehouse_id' => $this->warehouse->id, 'lines' => array_map(fn ($id) => ['product_id' => $id, 'grade' => 'A', 'bag_type' => 'weight', 'quantity' => '50'], [$this->product->id, $corn->id])]);
+        $purchase = $this->runCommand('purchase.create', [
+            'lines' => array_map(fn ($id) => ['receipt_line_id' => $id, 'price' => '800', 'basis' => 'viss'], $receipt['line_ids']),
+            'adjustments' => [['rate_id' => $service->id], ['rate_id' => $addition->id, 'amount' => '123.45', 'direction' => 'add'], ['rate_id' => $deduction->id, 'amount' => '23.45', 'direction' => 'subtract']],
+            'labor' => [['labor_rate_id' => $labor->id, 'mael_id' => $mael, 'bags' => '2']],
+        ]);
+        $sale = $this->sale('10', 'hold', ['adjustments' => [['rate_id' => $service->id], ['rate_id' => $deduction->id, 'amount' => '10', 'direction' => 'subtract']], 'labor' => [['labor_rate_id' => $labor->id, 'mael_id' => $mael, 'bags' => '1']]]);
+        R::update('adjustment_rates', $service->id, ['name' => 'Renamed service fee', 'rate' => '5']);
+        $this->actingAs($this->clerk);
+        $fetch = fn (array $filters = []) => $this->getJson('/api/reports/adjustments?'.http_build_query($filters + ['from' => '2026-10-25', 'to' => '2026-10-25']))->assertOk()->json();
+
+        $report = $fetch();
+
+        $this->assertSame(7, $report['count']);
+        $this->assertSame(['additions' => '723.45', 'deductions' => '1833.45', 'net' => '-1110.00'], $report['totals']);
+        $purchaseRows = array_values(array_filter($report['rows'], fn ($row) => $row['kind'] === 'purchase'));
+        $this->assertCount(4, $purchaseRows);
+        $this->assertSame((string) $receipt['line_ids'][0], $purchaseRows[0]['linkId']);
+        $this->assertSame((string) $purchase['document_id'], $purchaseRows[0]['documentId']);
+        $saleRows = array_values(array_filter($report['rows'], fn ($row) => $row['kind'] === 'sale'));
+        $this->assertSame((string) DB::table('document_lines')->where('document_id', $sale['document_id'])->value('id'), $saleRows[0]['linkId']);
+        $this->assertContains('Original service fee', array_column($report['rows'], 'label'));
+        $this->assertNotContains('Renamed service fee', array_column($report['rows'], 'label'));
+        $this->assertSame(['additions' => '723.45', 'deductions' => '0.00', 'net' => '723.45'], $fetch(['direction' => 'add'])['totals']);
+        $this->assertSame(['additions' => '0.00', 'deductions' => '1833.45', 'net' => '-1833.45'], $fetch(['direction' => 'subtract'])['totals']);
+        $this->assertSame('-500.00', $fetch(['category' => 'labor'])['totals']['net']);
+        $this->assertSame('-700.00', $fetch(['category' => 'service'])['totals']['net']);
+        $this->assertSame('90.00', $fetch(['category' => 'other'])['totals']['net']);
+        $this->assertSame('123.45', $fetch(['category' => 'other:Packing charge'])['totals']['net']);
+        $this->assertSame(4, $fetch(['q' => 'Trader'])['count']);
+        $this->assertSame(4, $fetch(['q' => R::get('documents', $purchase['document_id'])->number])['count']);
+        $this->assertSame(3, $fetch(['source_kind' => 'sale'])['count']);
+        $this->assertSame(0, $fetch(['from' => '2026-10-26', 'to' => '2026-10-26'])['count']);
+        $this->assertSame(['additions' => '0.00', 'deductions' => '0.00', 'net' => '0.00'], $fetch(['q' => 'No matching voucher'])['totals']);
+        R::update('documents', $purchase['document_id'], ['status' => 'reversed']);
+        $this->assertSame(3, $fetch()['count']);
+        $this->assertSame('590.00', $fetch()['totals']['net']);
+    }
+
+    public function test_adjustment_ledger_uses_settlement_confirmation_date_and_checks_access_and_filters(): void
+    {
+        $this->receive('100');
+        $this->sale('10');
+        $settlement = DB::table('documents')->where('kind', 'settlement')->first();
+        $this->actingAs($this->owner)->withSession([WorkspaceAccess::SESSION_KEY => 'owner']);
+        $url = '/api/reports/adjustments?from=2026-10-25&to=2026-10-26';
+        $this->getJson($url)->assertOk()->assertJsonPath('count', 0);
+        $this->runCommand('day.close', ['actual' => '2000000', 'confirmed' => true]);
+        $this->runCommand('day.next');
+        $this->runCommand('day.open', ['actual' => '2000000']);
+        $this->runCommand('settlement.confirm', ['document_id' => $settlement->id, 'service_mode' => 'yes', 'service_rate' => '1']);
+
+        $report = $this->getJson($url)->assertOk()->json();
+
+        $this->assertSame(1, $report['count']);
+        $this->assertSame('2026-10-26', $report['rows'][0]['date']);
+        $this->assertSame('settlement', $report['rows'][0]['kind']);
+        $this->assertSame((string) $settlement->id, $report['rows'][0]['linkId']);
+        $this->assertSame('-100.00', $report['totals']['net']);
+        $this->getJson('/api/reports/adjustments?from=2026-10-25&to=2026-10-25')->assertOk()->assertJsonPath('count', 0);
+        $this->getJson($url.'&direction=invalid')->assertUnprocessable()->assertJsonValidationErrors('direction');
+        $this->getJson($url.'&source_kind=expense')->assertUnprocessable()->assertJsonValidationErrors('source_kind');
+        $this->getJson('/api/reports/adjustments?from=2026-10-26&to=2026-10-25')->assertUnprocessable()->assertJsonValidationErrors('to');
+        $this->owner->active = false;
+        $this->owner->save();
+        $this->getJson($url)->assertForbidden();
+        $this->post('/logout');
+        $this->getJson($url)->assertUnauthorized();
+    }
+
     public function test_server_reports_reconcile_stock_statement_and_provisional_profit(): void
     {
         $r = $this->receive();
@@ -1750,6 +2024,24 @@ class BusinessFlowsTest extends TestCase
         $this->equalDecimal('5', $state['adjustments'][1]['qty']);
         $this->assertSame('supplier', $state['adjustments'][1]['history2']['owner']);
         $this->equalDecimal('-5', $state['adjustments'][1]['history2']['qtyDelta']);
+        $this->equalDecimal('1510', $state['adjustments'][0]['history2']['qtyAfter']);
+        $this->equalDecimal('1505', $state['adjustments'][1]['history2']['qtyAfter']);
+        $this->assertSame('Sesame', $state['adjustments'][0]['history2']['product']);
+        $this->assertSame('Main', $state['adjustments'][0]['history2']['warehouseName']);
+        $this->assertSame($lot->batch, $state['adjustments'][0]['history2']['sourceBatch']);
+        $this->assertSame('Trader', $state['adjustments'][0]['history2']['ownerName']);
+
+        foreach (DB::table('stock_events')->where('kind', 'adjust')->get() as $event) {
+            R::update('stock_events', $event->id, ['details' => ['owner' => 'supplier', 'warehouse' => $this->warehouse->id, 'party' => $this->trader->id]]);
+        }
+        $this->runCommand('stock.adjust', ['lot_id' => $lot->id, 'quantity' => '20', 'reason' => 'Later correction'], $this->clerk);
+        $legacy = app(Projection::class)->forUser($this->owner)['adjustments'];
+        $this->equalDecimal('1510', $legacy[0]['history2']['qtyAfter']);
+        $this->equalDecimal('1505', $legacy[1]['history2']['qtyAfter']);
+        $this->equalDecimal('1525', $legacy[2]['history2']['qtyAfter']);
+        $this->assertSame('Sesame', $legacy[0]['history2']['product']);
+        $this->assertSame('Main', $legacy[0]['history2']['warehouseName']);
+        $this->assertSame($lot->batch, $legacy[0]['history2']['sourceBatch']);
     }
 
     public function test_historical_advance_can_cover_purchase_without_new_payment(): void

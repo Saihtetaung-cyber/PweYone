@@ -6,6 +6,7 @@ use App\Domain\Decimal as D;
 use App\Domain\Records as R;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -216,7 +217,35 @@ final class BusinessService
 
     private function event(string $kind, object $lot, ?string $qty, ?string $bags, ?object $doc = null, ?object $to = null, array $details = []): object
     {
+        if ($kind === 'adjust') {
+            $details += $this->adjustmentSnapshot($lot, $qty, $bags, $doc);
+        }
+
         return R::insert('stock_events', ['kind' => $kind, 'lot_id' => $lot->id, 'destination_lot_id' => $to?->id, 'document_id' => $doc?->id, 'business_date' => $doc?->business_date ?? $this->day->business_date, 'quantity' => $qty, 'bags' => $bags, 'details' => $details + ['owner' => $lot->owner, 'destinationOwner' => $to?->owner, 'warehouse' => $lot->warehouse_id, 'party' => $lot->party_id, 'receiptLine' => $lot->receipt_line_id], 'actor_id' => $this->actor->id]);
+    }
+
+    /**
+     * @return array{product: string, warehouseName: string, sourceBatch: ?string, ownerName: string, qtyBefore: ?string, qtyAfter: ?string, bagsBefore: ?string, bagsAfter: ?string, qtyDelta: ?string, bagsDelta: ?string, reasonLabel: string, role: string}
+     */
+    private function adjustmentSnapshot(object $lot, ?string $quantityDelta, ?string $bagsDelta, ?object $document): array
+    {
+        $after = R::get('stock_lots', $lot->id);
+        $party = $lot->party_id ? R::get('partners', $lot->party_id) : null;
+
+        return [
+            'product' => R::get('products', $lot->product_id)->name,
+            'warehouseName' => R::get('warehouses', $lot->warehouse_id)->name,
+            'sourceBatch' => $lot->batch,
+            'ownerName' => $lot->owner === 'owned' ? 'ပွဲရုံပိုင်' : ($party?->name ?? ''),
+            'qtyBefore' => $lot->quantity,
+            'qtyAfter' => $after->quantity,
+            'bagsBefore' => $lot->bags,
+            'bagsAfter' => $after->bags,
+            'qtyDelta' => $quantityDelta,
+            'bagsDelta' => $bagsDelta,
+            'reasonLabel' => $document?->note ?? 'မြေပြင်စစ်ချက်',
+            'role' => $this->actor->role === 'owner' ? 'owner' : 'staff',
+        ];
     }
 
     private function cash(object $doc, mixed $account, string $amount, string $title, ?int $reverses = null, bool $home = false, ?string $date = null): object
@@ -649,18 +678,26 @@ final class BusinessService
             $receipt = $rec->id;
             $lots = DB::table('stock_lots')->where('receipt_line_id', $source->id)->where('owner', 'supplier')->where(fn ($q) => $q->whereNull('quantity')->orWhere('quantity', '>', 0))->get();
             R::require($lots->isNotEmpty() && $lots->every(fn ($l) => $l->quantity !== null), 'Record actual weights before purchasing.');
-            $qty = D::sum($lots->pluck('quantity'));
-            R::require(D::cmp($qty, '0') > 0, 'No eligible trader-owned quantity remains.');
-            if (isset($row['quantity'])) {
-                R::require(D::cmp(D::value($row['quantity']), $qty) === 0, 'Purchase the entire eligible residual quantity. Refresh stock.');
+            $available = D::sum($lots->pluck('quantity'));
+            $qty = isset($row['quantity']) ? $this->amount($row, 'quantity', true, 8) : $available;
+            R::require(D::cmp($qty, '0') > 0 && D::cmp($qty, $available) <= 0, 'Purchase quantity exceeds eligible trader-owned stock. Refresh stock.');
+            $partial = D::cmp($qty, $available) < 0;
+            $sourceBags = isset($row['source_bags']) ? $this->amount($row, 'source_bags', false, 8) : null;
+            if ($partial && $lots->contains(fn ($lot) => $lot->bags !== null && $lot->package_viss === null)) {
+                R::require($sourceBags !== null, 'Enter the actual source bags included in this partial purchase.', 'source_bags');
             }
             [$price,$basis,$g] = $this->price($row, R::get('products', $source->product_id), $qty, $source->bags);
-            $prepared[] = compact('source', 'rec', 'lots', 'qty', 'price', 'basis', 'g', 'row');
+            $prepared[] = compact('source', 'rec', 'lots', 'qty', 'price', 'basis', 'g', 'row', 'partial', 'sourceBags');
             $gross = D::add($gross, $g);
         }
         $charges = $this->charges($in, 'purchase', $gross, $prepared);
         R::require(D::cmp($charges['net'], '0') >= 0, 'Deductions exceed purchase value.');
         $doc = $this->document('purchase', array_merge($in, ['party_id' => $party]), ['source_document_id' => $receipt, 'gross' => $gross, 'net' => $charges['net'], 'details' => ['charges' => $charges]]);
+        $additionalAdvance = $this->amount($in, 'additional_advance_amount');
+        if (D::cmp($additionalAdvance, '0') > 0) {
+            $advance = $this->advance(['party_id' => $party, 'date' => $doc->business_date, 'amount' => $additionalAdvance, 'account_id' => $in['advance_account_id'] ?? null, 'source_document_id' => $doc->id]);
+            $in['recoveries'][] = ['document_id' => $advance['document_id'], 'amount' => $additionalAdvance];
+        }
         $recovered = $this->recover($doc, $in);
         $net = D::money(D::sub($charges['net'], $recovered));
         R::require(D::cmp($net, '0') >= 0, 'Deductions exceed purchase value.');
@@ -668,10 +705,13 @@ final class BusinessService
         $assigned = '0';
         $count = count($prepared);
         foreach ($prepared as $i => $x) {
+            if ($x['partial']) {
+                $x['source'] = $this->splitPurchaseReceipt($x, $doc);
+            }
             $lineNet = $i === $count - 1 ? D::sub($net, $assigned) : D::money(D::div(D::mul($net, $x['g']), $gross));
             $assigned = D::add($assigned, $lineNet);
             $line = $this->line($doc, ['source_line_id' => $x['source']->id, 'product_id' => $x['source']->product_id, 'warehouse_id' => $x['source']->warehouse_id, 'grade' => $x['source']->grade, 'quantity' => $x['qty'], 'bags' => $x['source']->bags, 'price' => $x['price'], 'price_basis' => $x['basis'], 'gross' => $x['g'], 'net' => $lineNet, 'ownership' => 'owned', 'details' => ['pricingBags' => $x['row']['pricing_bags'] ?? null, 'purchaseBagViss' => $x['row']['purchase_package_viss'] ?? null, 'purchaseBags' => $x['row']['purchase_bags'] ?? null, 'standardViss' => R::get('products', $x['source']->product_id)->standard_viss, 'originalQuantity' => $x['source']->quantity]]);
-            foreach ($x['lots'] as $lot) {
+            foreach ($x['partial'] ? [] : $x['lots'] as $lot) {
                 R::update('stock_lots', $lot->id, ['owner' => 'owned', 'unit_cost' => D::div($x['g'], $x['qty'])]);
                 $this->event('purchase', $lot, $lot->quantity, $lot->bags, $doc, null, ['fromOwner' => 'supplier', 'toOwner' => 'owned']);
             }
@@ -679,6 +719,51 @@ final class BusinessService
         $this->applyPayment(R::get('documents', $doc->id), $in['payments'] ?? [], null, $doc->business_date);
 
         return ['document_id' => $doc->id, 'net' => $net];
+    }
+
+    /** @param array{source: object, rec: object, lots: Collection, qty: string, sourceBags: ?string, g: string} $purchase */
+    private function splitPurchaseReceipt(array $purchase, object $document): object
+    {
+        $source = $purchase['source'];
+        $details = R::details($source);
+        $purchasedReceiptLine = $this->line($purchase['rec'], ['product_id' => $source->product_id, 'warehouse_id' => $source->warehouse_id, 'grade' => $source->grade, 'quantity' => $purchase['qty'], 'ownership' => 'supplier', 'details' => $details + ['splitFromLineId' => $source->id]]);
+        $quantityRemaining = $purchase['qty'];
+        $sourceBagsRemaining = $purchase['sourceBags'];
+        $purchasedBags = '0';
+        $bagsKnown = true;
+        foreach ($purchase['lots']->sortBy('id') as $lot) {
+            if (D::cmp($quantityRemaining, '0') <= 0) {
+                break;
+            }
+            $quantity = D::cmp($quantityRemaining, $lot->quantity) < 0 ? $quantityRemaining : $lot->quantity;
+            $purchasesWholeLot = D::cmp($quantity, $lot->quantity) === 0;
+            if ($purchasesWholeLot) {
+                $bags = $lot->bags;
+            } elseif ($lot->package_viss !== null && D::cmp($lot->package_viss, '0') > 0) {
+                $bags = D::div($quantity, $lot->package_viss);
+            } else {
+                $bags = $sourceBagsRemaining;
+            }
+            R::require($bags === null || $lot->bags === null || D::cmp($bags, $lot->bags) <= 0, 'Purchase bags exceed remaining source bags.', 'source_bags');
+            if ($bags !== null) {
+                $purchasedBags = D::add($purchasedBags, $bags);
+                if ($sourceBagsRemaining !== null) {
+                    $sourceBagsRemaining = D::sub($sourceBagsRemaining, $bags);
+                    R::require(D::cmp($sourceBagsRemaining, '0') >= 0, 'Source bag count does not match the selected stock.', 'source_bags');
+                }
+            } else {
+                $bagsKnown = false;
+            }
+            $this->take($lot, $quantity, $bags);
+            $owned = $this->cloneLot($lot, ['owner' => 'owned', 'receipt_line_id' => $purchasedReceiptLine->id, 'quantity' => $quantity, 'bags' => $bags, 'unit_cost' => D::div($purchase['g'], $purchase['qty'])]);
+            $this->event('purchase', $lot, $quantity, $bags, $document, $owned, ['fromOwner' => 'supplier', 'toOwner' => 'owned']);
+            $quantityRemaining = D::sub($quantityRemaining, $quantity);
+        }
+        R::require($sourceBagsRemaining === null || D::cmp($sourceBagsRemaining, '0') === 0, 'Source bag count does not match the selected stock.', 'source_bags');
+        R::update('document_lines', $purchasedReceiptLine->id, ['bags' => $bagsKnown ? $purchasedBags : null]);
+        R::update('document_lines', $source->id, ['quantity' => D::sub($source->quantity, $purchase['qty']), 'bags' => $source->bags !== null && $bagsKnown ? D::sub($source->bags, $purchasedBags) : null, 'details' => $details + ['originalReceivedQuantity' => $source->quantity, 'originalReceivedBags' => $source->bags]]);
+
+        return R::get('document_lines', $purchasedReceiptLine->id);
     }
 
     private function take(object $lot, string $qty, ?string $bags = null): void
@@ -920,7 +1005,7 @@ final class BusinessService
         return ['document_id' => $doc->id];
     }
 
-    private function fingerprint(object $lot): string
+    public function stockCheckFingerprint(object $lot): string
     {
         return hash('sha256', json_encode([$lot->quantity, $lot->bags, $lot->owner, $lot->warehouse_id, $lot->updated_at]));
     }
@@ -936,7 +1021,7 @@ final class BusinessService
         R::require($q !== null || $b !== null, 'Record a measured weight or counted bags.');
         $matched = $q === $lot->quantity && $b === $lot->bags;
         R::require(! DB::table('stock_checks')->where('lot_id', $lot->id)->where('status', 'pending')->exists(), 'A stock check is already pending for this lot.');
-        $r = R::insert('stock_checks', ['lot_id' => $lot->id, 'business_date' => $this->date($in), 'expected_quantity' => $lot->quantity, 'expected_bags' => $lot->bags, 'actual_quantity' => $q, 'actual_bags' => $b, 'status' => $matched ? 'matched' : 'pending', 'fingerprint' => $this->fingerprint($lot), 'reason' => $this->label($in['reason'] ?? 'ရေတွက်စစ်ဆေး', 'reason'), 'submitted_by' => $this->actor->id]);
+        $r = R::insert('stock_checks', ['lot_id' => $lot->id, 'business_date' => $this->date($in), 'expected_quantity' => $lot->quantity, 'expected_bags' => $lot->bags, 'actual_quantity' => $q, 'actual_bags' => $b, 'status' => $matched ? 'matched' : 'pending', 'fingerprint' => $this->stockCheckFingerprint($lot), 'reason' => $this->label($in['reason'] ?? 'ရေတွက်စစ်ဆေး', 'reason'), 'submitted_by' => $this->actor->id]);
 
         return ['id' => $r->id, 'status' => $r->status];
     }
@@ -948,7 +1033,7 @@ final class BusinessService
         R::require($r->status === 'pending', 'Check has already been decided.');
         $lot = R::get('stock_lots', $r->lot_id);
         if ($approve) {
-            R::require(hash_equals($r->fingerprint, $this->fingerprint($lot)), 'Stock changed since this check. Submit a new count.');
+            R::require(hash_equals($r->fingerprint, $this->stockCheckFingerprint($lot)), 'Stock changed since this check. Submit a new count.');
             $q = $r->actual_quantity ?? $lot->quantity;
             $b = $r->actual_bags ?? $lot->bags;
             R::update('stock_lots', $lot->id, ['quantity' => $q, 'bags' => $b]);

@@ -27,7 +27,7 @@ function taskItems(){
  state.receipts.filter(r=>r.status!=='purchased').forEach(r=>out.push({
   key:r.id,kind:'purchase',name:r.name,meta:`${r.product} · အဆင့် ${r.grade} · ${vissText37(r.qty)} ပိဿာ`,
   status:receiptStatus(r),icon:r.status==='draft'?'note':r.status==='deposit'?'stock':'clock',
-  label:r.status==='draft'?'ဆက်ဖြည့်မယ်':'ဈေးထည့်မယ်',action:`openReceiptProcess('${r.id}')`
+  label:'ဈေးဖြတ် ဝယ်ယူမယ်',action:`purchase4('${r.id}')`,receipt:r
  }));
  state.receipts.filter(r=>r.status==='purchased'&&due(r)>0).forEach(r=>out.push({
   key:r.id+'pay',kind:'money',name:r.name,meta:`အဝယ်ငွေ ရှင်းရန် · ${cashText(due(r))}`,
@@ -48,7 +48,9 @@ function taskItems(){
  return out;
 }
 function taskRow(t){
- return `<div class="v2-task"><span class="task-icon">${I(t.icon)}</span><div class="grow"><strong>${E(t.name)}</strong><div class="meta">${E(t.meta)}</div></div>${t.status}${btn(t.label,t.action,'secondary')}</div>`;
+ const r=t.receipt;
+ const actions=r?`<div class="v2-task-actions">${btn(t.label,t.action,'primary','price')}${smallbtn('အသေးစိတ်',`receiptDetail4('${r.id}')`,'secondary','eye')}${r.v4?smallbtn('ပြင်မယ်',`openReceive4('${E(r.voucherNo)}')`,'secondary'):''}${r.partnerId?smallbtn('ကြိုသုံးငွေ',`openSupplierAdvance('${r.partnerId}','${r.id}')`,'secondary'):''}</div>`:btn(t.label,t.action,'secondary');
+ return `<div class="v2-task${r?' v2-task-with-actions':''}"><span class="task-icon">${I(t.icon)}</span><div class="grow"><strong>${E(t.name)}</strong><div class="meta">${E(t.meta)}</div></div>${t.status}${actions}</div>`;
 }
 renderNav=function(){
  const staff=[['home','home','ယနေ့အလုပ်'],['receipts','receive','အဝယ်'],['sales','sale','အရောင်း'],['records','doc','စာရင်းများ']];

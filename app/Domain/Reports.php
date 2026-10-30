@@ -9,6 +9,63 @@ use Illuminate\Support\Facades\DB;
 
 final class Reports
 {
+    public function adjustments(User $actor, string $from, string $to, array $filters = []): array
+    {
+        abort_unless($actor->active, 403);
+
+        return DB::transaction(function () use ($from, $to, $filters): array {
+            $documents = DB::table('documents as d')->leftJoin('partners as p', 'p.id', '=', 'd.party_id')
+                ->whereIn('d.kind', ['purchase', 'sale', 'settlement'])->where('d.status', '!=', 'reversed')
+                ->where(fn ($query) => $query->where('d.kind', '!=', 'settlement')->orWhere('d.status', 'confirmed'))
+                ->select('d.*', 'p.name as party_name', 'p.locality as party_locality')->orderByDesc('d.business_date')->orderByDesc('d.id')->get();
+            $lines = DB::table('document_lines')->whereIn('document_id', $documents->pluck('id'))->orderBy('id')->get()->groupBy('document_id');
+            $categories = ['labor' => 'လုပ်သားခ', 'service' => 'ဝန်ဆောင်ခ', 'other' => 'အခြားပေါင်းနုတ်ငွေ'];
+            $rows = [];
+            foreach ($documents as $document) {
+                $details = R::details($document);
+                $date = $document->kind === 'settlement' ? ($details['confirmedDate'] ?? $document->business_date) : $document->business_date;
+                $party = trim(($document->party_name ?? '').($document->party_locality ? ' ('.$document->party_locality.')' : ''));
+                $line = $lines->get($document->id)?->first();
+                foreach ($details['charges']['items'] ?? [] as $index => $item) {
+                    $amount = D::money((string) $item['amount']);
+                    if (D::cmp($amount, '0') <= 0 || ! in_array($item['direction'] ?? '', ['add', 'subtract'], true)) {
+                        continue;
+                    }
+                    $category = match ($item['mode'] ?? '') {
+                        'labor' => 'labor', 'service_percent' => 'service', default => 'other',
+                    };
+                    $label = $item['label'] ?? $categories[$category];
+                    $categoryKey = $category === 'other' ? 'other:'.$label : $category;
+                    $categories[$categoryKey] = $category === 'other' ? $label : $categories[$category];
+                    if ($date < $from || $date > $to
+                        || ! empty($filters['source_kind']) && $filters['source_kind'] !== $document->kind
+                        || ! empty($filters['direction']) && $filters['direction'] !== $item['direction']
+                        || ! empty($filters['category']) && ! in_array($filters['category'], [$category, $categoryKey], true)
+                        || trim($filters['q'] ?? '') !== '' && mb_stripos($party.' '.$document->number, trim($filters['q'])) === false) {
+                        continue;
+                    }
+                    $rows[] = [
+                        'id' => $document->id.'-'.$index, 'documentId' => (string) $document->id, 'voucher' => $document->number,
+                        'date' => $date, 'recordedAt' => $document->created_at, 'party' => $party, 'kind' => $document->kind,
+                        'direction' => $item['direction'], 'category' => $category, 'categoryKey' => $categoryKey, 'label' => $label,
+                        'rate' => ($item['mode'] ?? '') === 'service_percent' ? (string) ($item['rate'] ?? '0') : null,
+                        'amount' => $amount, 'signedAmount' => $item['direction'] === 'add' ? $amount : D::money(D::sub('0', $amount)),
+                        'linkId' => $document->kind === 'settlement' ? (string) $document->id : ($document->kind === 'purchase' ? (isset($line->source_line_id) ? (string) $line->source_line_id : null) : (isset($line->id) ? (string) $line->id : null)),
+                    ];
+                }
+            }
+            usort($rows, fn ($a, $b) => strcmp($b['date'], $a['date']) ?: ((int) $b['documentId'] <=> (int) $a['documentId']));
+            $additions = D::money(D::sum(array_column(array_filter($rows, fn ($row) => $row['direction'] === 'add'), 'amount')));
+            $deductions = D::money(D::sum(array_column(array_filter($rows, fn ($row) => $row['direction'] === 'subtract'), 'amount')));
+
+            return [
+                'from' => $from, 'to' => $to, 'rows' => $rows, 'count' => count($rows),
+                'categories' => collect($categories)->map(fn ($label, $id) => ['id' => $id, 'label' => $label])->values()->all(),
+                'totals' => ['additions' => $additions, 'deductions' => $deductions, 'net' => D::money(D::sub($additions, $deductions))],
+            ];
+        });
+    }
+
     public function overview(User $actor, string $from, string $to): array
     {
         abort_unless($actor->role === 'owner' && $actor->active, 403);

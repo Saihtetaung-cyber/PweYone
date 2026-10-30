@@ -3,7 +3,7 @@
    account permissions, loan calculations and voucher links remain authoritative. */
 (function(){
  const oldPage=cashPage,oldBody=renderCashBody;
- const tabs=[['movements','ငွေအဝင် / အထွက်'],['cashins50','ငွေဖြည့် / ငွေလွှဲ'],['expenses2','အသုံးစရိတ်'],['payables','ပေးရန်ရှိ'],['receivables','ရရန်ရှိ'],['loans2','ကြိုထုတ်ငွေ'],['requests','အိမ်မှ ငွေယူလက်မှတ်'],['collections','အရောင်းငွေ တောင်းခံလက်မှတ်']];
+ const tabs=[['movements','ငွေအဝင် / အထွက်'],['cashins50','ငွေဖြည့် / ငွေလွှဲ'],['expenses2','အသုံးစရိတ်'],['payables','ပေးရန်ရှိ'],['receivables','ရရန်ရှိ'],['loans2','ကြိုထုတ်ငွေ'],['requests','အိမ်မှ ငွေယူလက်မှတ်'],['collections','အရောင်းငွေ တောင်းခံလက်မှတ်'],['adjustments','ပေါင်းနုတ်ငွေစာရင်း']];
  const ui={};let loanMarkup='';
  function filters(){const key=state.role+':'+cashTab;return ui[key]||(ui[key]={query:'',status:'all',from:state.role==='owner'?ownerDateFrom:'',to:state.role==='owner'?ownerDateTo:'',account:'',kind:'all',reason:'',party:'',page:1});}
  function dom(html){const x=document.createElement('div');x.innerHTML=html;return x;}
@@ -21,7 +21,8 @@
   label('ငွေသိမ်းရာ','cash2Account',select('cash2Account',accountOptions(),f.account))+
   (expense?label('အကြောင်းအရာ','cash2Reason',select('cash2Reason',[['','အကြောင်းအရာအားလုံး'],...[...new Set((state.expenses||[]).filter(x=>!x.recoverable&&!x.paymentPending&&canViewAccount68(x.account)).map(x=>x.reason||x.title||'အခြား'))].map(x=>[x,x])],f.reason)):
    label('အဝင် / အထွက်','cash2Kind',select('cash2Kind',[['all','အားလုံး'],['in','ငွေဝင်'],['out','ငွေထွက်']],f.kind)))+
-  smallbtn('Filter ရှင်းမယ်','cash2Clear()','secondary')+'</div>';
+  smallbtn('Filter ရှင်းမယ်','cash2Clear()','secondary')+
+  (expense?'':'<div class="cash2-movement-search">'+label('အကြောင်းအရာ / အမည် / ဘောက်ချာ ရှာရန်','cash2Search',`<input type="search" id="cash2Search" value="${E(f.query)}" placeholder="အကြောင်းအရာ၊ အမည်၊ ဘောက်ချာနံပါတ် ရိုက်ရှာပါ" oninput="cash2Search(this.value)">`)+'</div>')+'</div>';
  }
  function searchControls(f,status){const choices=[['all','အားလုံး'],['pending','မရသေး'],['partial','တစ်စိတ်တစ်ပိုင်း ရပြီး'],['complete','အပြည့်ရပြီး']];return `<div class="cash2-controls cash2-search-controls ${status?'':'cash2-search-only'}">`+
   label(cashTab==='payables'?'ကုန်သည်အမည် / ဘောက်ချာ ရှာရန်':'ဝယ်သူအမည် / လက်မှတ် ရှာရန်','cash2Search',`<input type="search" id="cash2Search" value="${E(f.query)}" placeholder="အမည် သို့မဟုတ် အမှတ် ရိုက်ရှာပါ" oninput="cash2Search(this.value)">`)+
@@ -32,7 +33,7 @@
  function metadata(count){return `<p class="cash2-meta" id="cash2Results" role="status" aria-live="polite">မှတ်တမ်း ${N(count)} ခု</p>`;}
  function pages(count,f){const total=Math.max(1,Math.ceil(count/20));f.page=Math.min(f.page,total);return count>20?`<div class="cash2-pages">${smallbtn('ရှေ့စာမျက်နှာ',"cash2Page(-1)",'secondary').replace('<button ','<button '+(f.page===1?'disabled ':''))}<span>စာမျက်နှာ ${N(f.page)} / ${N(total)}</span>${smallbtn('နောက်စာမျက်နှာ',"cash2Page(1)",'secondary').replace('<button ','<button '+(f.page===total?'disabled ':''))}</div>`:'';}
  function movement(f){
-  const rows=invalid(f)?[]:state.transactions.filter(t=>canViewAccount68(t.account)&&inRange(t.date,f)&&(!f.account||f.account===t.account)&&(f.kind==='all'||(f.kind==='in'?t.amount>0:t.amount<0))).slice().reverse();
+  const rows=invalid(f)?[]:state.transactions.filter(t=>canViewAccount68(t.account)&&inRange(t.date,f)&&(!f.account||f.account===t.account)&&(f.kind==='all'||(f.kind==='in'?t.amount>0:t.amount<0))&&match([t.title,t.party,t.ref,ACCOUNT_NAMES[t.account]||t.account].join(' '),f.query)).slice().reverse();
   const incoming=rows.reduce((n,t)=>n+Math.max(0,t.amount),0),outgoing=rows.reduce((n,t)=>n+Math.max(0,-t.amount),0),pagination=pages(rows.length,f),part=rows.slice((f.page-1)*20,f.page*20);
   return `<div class="grid cols-3 mb">${stat('ငွေဝင်',M(incoming),'ကျပ်','receive','ရွေးထားသောစာရင်း','compact')}${stat('ငွေထွက်',M(outgoing),'ကျပ်','transfer','ရွေးထားသောစာရင်း','compact')}${stat('အသားတင် လှုပ်ရှားမှု',M(incoming-outgoing),'ကျပ်','wallet','ငွေလွှဲအဝင် / အထွက် ပါဝင်သည်','compact')}</div>`+metadata(rows.length)+(rows.length?table4(['ရက် / အကြောင်းအရာ','ငွေသိမ်းရာ','သက်ဆိုင်သူ / အမှတ်','ငွေဝင်','ငွေထွက်'],part.map(t=>`<tr><td><strong>${E(t.title)}</strong><div class="sub">${dateValid(t.date)&&t.date?shortDate(t.date):'ရက်မသိရသေး'} · ${E(t.time||'')}</div></td><td>${E(ACCOUNT_NAMES[t.account]||t.account)}</td><td>${E(t.party||'—')}<div class="sub">${E(t.ref||'')}</div></td><td>${t.amount>0?cashText(t.amount):'—'}</td><td>${t.amount<0?cashText(-t.amount):'—'}</td></tr>`)):empty('ရွေးထားသော Filter နှင့် ကိုက်ညီသော ငွေမှတ်တမ်း မရှိပါ။','wallet'))+pagination+`<p class="cash2-meta">ငွေသိမ်းရာအချင်းချင်း လွှဲငွေကို အမြတ် / အရှုံးအဖြစ် မတွက်ပါ။</p>`;
  }
@@ -54,7 +55,7 @@
  window.cash2Refresh=function(){const f=filters();for(const [id,key] of [['cash2From','from'],['cash2To','to'],['cash2Account','account'],['cash2Kind','kind'],['cash2Reason','reason']]){const el=document.getElementById(id);if(el)f[key]=el.value;}f.page=1;renderCashBody();};
  window.cash2Page=function(delta){filters().page=Math.max(1,filters().page+delta);renderCashBody();};
  window.cash2Clear=function(){const f=filters();Object.assign(f,{query:'',status:'all',from:'',to:'',account:'',kind:'all',reason:'',page:1});if(cashTab==='requests'&&state.role==='owner'){setOwnerDatePreset('all');return;}renderCashBody();};
- window.cash2Search=function(q){filters().query=q;applySearch();};
+ window.cash2Search=function(q){const f=filters();f.query=q;f.page=1;if(cashTab==='movements'){const root=document.getElementById('cash2MovementResults');if(root)root.innerHTML=movement(f);}else applySearch();};
  window.cash2Status=function(s){filters().status=s;applySearch();};
  window.cash2LoanFilter=function(party){filters().party=party;document.getElementById('loanList38').innerHTML=loanTable38(party);};
  function applySearch(){
@@ -72,7 +73,7 @@
   if(cashTab==='movements'||cashTab==='expenses2'){
    const expense=cashTab==='expenses2';title=expense?'အသုံးစရိတ်':'ငွေအဝင် / အထွက်';desc=expense?'ပွဲရုံခံအသုံးစရိတ်များကို ရက်နှင့် အကြောင်းအရာအလိုက် ကြည့်ပါ။':'ငွေသိမ်းရာအလိုက် ငွေလှုပ်ရှားမှုကို ကြည့်ပါ။';
    if(expense&&state.role==='staff')actions=btn('အသုံးစရိတ် မှတ်မယ်','openExpense()','primary','plus');
-   controls=dateControls(f,expense);content=(invalid(f)?'<div class="cash2-error" role="alert">စရက်သည် ဆုံးရက်ထက် မကျော်ရပါ။ ရက်ကာလကို ပြန်ရွေးပါ။</div>':'')+(expense?expenses(f):movement(f));
+   controls=dateControls(f,expense);content=(invalid(f)?'<div class="cash2-error" role="alert">စရက်သည် ဆုံးရက်ထက် မကျော်ရပါ။ ရက်ကာလကို ပြန်ရွေးပါ။</div>':'')+(expense?expenses(f):'<div id="cash2MovementResults">'+movement(f)+'</div>');
   }else if(cashTab==='loans2'){
    title='ကြိုထုတ်ငွေ';desc='ကုန်သည်အလိုက် အတိုးပါကြိုထုတ်ငွေနှင့် ပြန်ဆပ်မှတ်တမ်းကို ကြည့်ပါ။';if(state.role==='owner')actions=btn('ကြိုထုတ်ငွေ ပေးမယ်','newLoan38()','primary','plus');
    const loan=dom(loanMarkup);loan.firstElementChild?.remove();const help=loan.querySelector('.note');if(help){const details=document.createElement('details');details.className='cash2-loan-help';details.innerHTML='<summary>ကြိုထုတ်ငွေ အတိုးတွက်ပုံ ကြည့်ရန်</summary>';help.replaceWith(details);details.append(help);}

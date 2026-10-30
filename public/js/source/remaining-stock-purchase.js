@@ -24,7 +24,7 @@
    current.every(l=>l.weightKnown!==false&&Number.isFinite(Number(l.qty))&&n(l.qty)>=0)&&lots.every(l=>l.owner==='supplier'||n(l.qty)<=eps)&&Math.abs(qty+sold-expected)<.001;
   return {r,lots:current,qty,sold,expected,valid};
  });}
- function partialVoucher(rs){return rs.some(r=>r.remainingPurchase2)||rs.some(r=>r.status!=='purchased'&&receiptSalePurchaseInfo2(r.id)?.sales.length);}
+ function partialVoucher(rs){return rs.some(r=>r.remainingPurchase2||r.splitPurchase2)||(rs.some(r=>r.status==='purchased')&&rs.some(r=>r.status!=='purchased'))||rs.some(r=>r.status!=='purchased'&&receiptSalePurchaseInfo2(r.id)?.sales.length);}
  function ready(rs){return entries(rs).every(e=>e.r.status==='purchased'||e.valid||(e.sold>eps&&e.qty<=eps&&e.r.weightKnown!==false));}
  function fingerprint(e){return JSON.stringify({receipt:e.r.id,status:e.r.status,qty:e.r.qty,sold:e.sold,
   sales:receiptSalePurchaseInfo2(e.r.id).sales.map(s=>[s.id,s.qty,s.sourceReceiptId,s.sourceLot]).sort(),
@@ -58,7 +58,7 @@
   const intro=form.querySelector('.v55-intro strong');if(intro)intro.textContent='လက်ကျန်ကို ဈေးဖြတ်ဝယ်ယူမည်';
   const introHelp=form.querySelector('.v55-intro p');if(introHelp)introHelp.textContent='မရောင်းရသေးသော လက်ကျန်ပမာဏအတွက်သာ ဈေးနှင့် ပေါင်းနုတ်ငွေများကို တွက်ပါမည်။';
   const head=form.closest('.work-page')?.querySelector('.modal-head h2');if(head)head.textContent='လက်ကျန်ကို ဈေးဖြတ်ဝယ်ယူမည်';
-  for(const el of form.querySelectorAll('#voucherLines4 .req-line')){const qty=$('vq'+el.dataset.i);if(qty){qty.readOnly=true;qty.closest('.field')?.querySelector('label')?.replaceChildren(document.createTextNode('ဝယ်ယူမည့် လက်ကျန်ပိဿာ'));const bag=$('vPurchaseBag47'+el.dataset.i),count=$('vPurchaseCount55'+el.dataset.i);if(bag&&n(bag.value)>n(qty.value))bag.value=qty.value;if(count&&(!n(count.value)||n(count.value)*n(bag?.value)>n(qty.value)+eps))count.value=String(Math.max(1,Math.floor((n(qty.value)+eps)/n(bag?.value))));}}
+  for(const el of form.querySelectorAll('#voucherLines4 .req-line')){const qty=$('vq'+el.dataset.i);if(qty){qty.readOnly=false;qty.closest('.field')?.querySelector('label')?.replaceChildren(document.createTextNode('ဝယ်ယူမည့် လက်ကျန်ပိဿာ'));const bag=$('vPurchaseBag47'+el.dataset.i),count=$('vPurchaseCount55'+el.dataset.i);if(bag&&n(bag.value)>n(qty.value))bag.value=qty.value;if(count&&(!n(count.value)||n(count.value)*n(bag?.value)>n(qty.value)+eps))count.value=String(Math.max(1,Math.floor((n(qty.value)+eps)/n(bag?.value))));}}
   calcVoucher4();
  };
  const previousPurchase=purchase4;
@@ -113,7 +113,8 @@
   root.querySelectorAll('.remaining2-action').forEach(b=>b.remove());
   const disabled=root.querySelector('.sold2-disabled');if(canBuy(rs)){const b=buyButton(id);if(disabled)disabled.replaceWith(b);else root.append(b);}
   const left=entries(rs).filter(e=>e.valid);if(partialVoucher(rs)&&left.length)root.append(button('လက်ကျန်ကို ရောင်းမယ်',()=>sellRemainingReceipt2(id)));
-  const purchased=rs.find(r=>r.status==='purchased'&&due(r)>0);if(purchased&&!root.querySelector('[onclick^="payVoucher4("]'))root.append(button('အဝယ်ငွေ ပေးချေမယ်',()=>payVoucher4('purchase',purchased.id)));
+  const purchased=[...new Map(rs.filter(r=>r.status==='purchased'&&due(r)>0).map(r=>[r.purchaseDocumentId,r])).values()];
+  if(purchased.length){root.querySelectorAll('[onclick^="payVoucher4("]').forEach(node=>node.remove());for(const record of purchased)root.append(button('အဝယ်ငွေ ပေးချေမယ် · '+(record.purchaseNo||record.no),()=>payVoucher4('purchase',record.id)));}
   if(traderGroups(rs).length&&!root.querySelector('.sold2-trader'))root.append(button('ကုန်သည်ငွေရှင်းသို့',()=>{const groups=traderGroups(rs);if(groups.length===1)return openTraderList74(groups[0].partner,groups[0].ref);receiptDetail4(id);document.querySelectorAll('.remaining2-sales').forEach(e=>e.open=true);}));
  }
  const previousRows=renderReceiptRows;
